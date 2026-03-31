@@ -275,7 +275,7 @@ with tab1:
                     
                     col_next1, col_next2 = st.columns(2)
                     with col_next1:
-                        if st.button("🤔 해설이 내 생각과 다름 ➡️ 오답노트 추가", key="manual_add_wn", use_container_width=True):
+                        if st.button("🤔 오답노트 추가", key="manual_add_wn", use_container_width=True):
                             if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                 new_row = pd.DataFrame([q])
                                 st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)

@@ -184,67 +184,47 @@ with st.sidebar:
                 st.caption(f"이전: {log['이전 해설']}")
                 st.markdown(f"새해설: {log['바뀐 해설']}")
                 st.divider()
-
-    st.subheader("⏯️ 전체 상태 통합 저장")
     
-    # [1] 현재 모든 상태(시험 진행 + 오답노트 전체)를 하나로 묶기
-    if st.session_state.get('db') is not None:
-        # 오답노트 데이터프레임을 저장 가능한 리스트 형태로 변환
-        wn_list = st.session_state.wrong_notes.to_dict('records')
-        
-        combined_progress = {
-            "exam_list": st.session_state.get('exam_list', []),
-            "idx": st.session_state.get('idx', 0),
-            "correct_count": st.session_state.get('correct_count', 0),
-            "total_solving_time": st.session_state.get('total_solving_time', 0.0),
-            "wrong_notes": wn_list, # 오답노트 몽땅 포함!
-            "selected_years": selected_years
+    
+    st.subheader("⏯️ 시험 진행상황")
+    
+    # [1] 현재 진행상황 데이터 구성
+    if st.session_state.get('exam_list') and not st.session_state.get('is_finished', False):
+        progress_data = {
+            "exam_list": st.session_state.exam_list,
+            "idx": st.session_state.idx,
+            "correct_count": st.session_state.correct_count,
+            "total_solving_time": st.session_state.total_solving_time,
+            "selected_years": selected_years # 당시 선택했던 연도 정보
         }
-        
-        progress_json = json.dumps(combined_progress, ensure_ascii=False)
+        progress_json = json.dumps(progress_data, ensure_ascii=False)
         
         st.download_button(
-            label="📥 전체 상태 백업 (시험+오답)",
+            label="📥 현재 진행상황 저장",
             data=progress_json,
-            file_name="full_backup.json",
+            file_name="quiz_progress.json",
             mime="application/json",
             use_container_width=True
         )
-    # [2] 통합 백업 파일 불러오기 
-    uploaded_backup = st.file_uploader("📤 백업 파일 불러오기 (.json)", type="json", key="full_backup_loader")
-    
-    if uploaded_backup:
+    else:
+        st.caption("진행 중인 시험이 없습니다.")
+
+    st.divider()
+
+    # [2] 진행상황 불러오기
+    uploaded_progress = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json")
+    if uploaded_progress:
         try:
-            # 파일 읽기
-            data = json.load(uploaded_backup)
-            
-            # --- [핵심] 불러온 연도 정보를 바탕으로 데이터베이스(db) 자동 로드 ---
-            years_to_restore = data.get("selected_years", [2026])
-            # 앱 상단의 load_local_data 함수를 직접 호출하여 db를 먼저 채워줍니다.
-            st.session_state.db = load_local_data(years_to_restore)
-            
-            # 시험 진행 상황 복구
-            st.session_state.exam_list = data.get("exam_list", [])
-            st.session_state.idx = data.get("idx", 0)
-            st.session_state.correct_count = data.get("correct_count", 0)
-            st.session_state.total_solving_time = data.get("total_solving_time", 0.0)
-            
-            # 오답노트 전체 복구
-            if data.get("wrong_notes"):
-                st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
-            
-            # 상태 초기화
+            data = json.load(uploaded_progress)
+            st.session_state.exam_list = data["exam_list"]
+            st.session_state.idx = data["idx"]
+            st.session_state.correct_count = data["correct_count"]
+            st.session_state.total_solving_time = data["total_solving_time"]
             st.session_state.answered = False
-            st.session_state.q_start_time = time.time()
-            
-            st.success("모든 데이터가 복구되었습니다! 즉시 학습을 이어갑니다.")
-            
-            # --- [중요] 즉시 화면 새로고침 ---
-            # 이 코드가 있어야 '데이터 불러오기' 버튼을 누르지 않아도 화면이 즉시 업데이트됩니다.
-            st.rerun() 
-            
+            st.session_state.q_start_time = time.time() # 불러온 시점부터 다시 타이머 시작
+            st.success("이전 진행상황을 불러왔습니다! '중간고사 연습' 탭으로 가세요.")
         except Exception as e:
-            st.error(f"백업 파일을 읽는 중 오류 발생: {e}")
+            st.error(f"파일 형식이 잘못되었습니다: {e}")
 
     # 오답 데이터 백업 및 복구
     st.subheader("💾 데이터 관리")
@@ -270,8 +250,7 @@ with st.sidebar:
     st.markdown(f"""
     <div class="copyright">
     <br>
-    16기 유각준 <br> 
-    (15기 김새봄님이 배포하신 프로그램의 작동방식을 벤치마킹했으며, 로데이터 역시 그대로 사용하였습니다)
+    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
     </div>    
     """, unsafe_allow_html=True)
 

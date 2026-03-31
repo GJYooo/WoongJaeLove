@@ -232,7 +232,7 @@ with st.sidebar:
     
     # 기본 데이터 로드 버튼
     if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
-        st.session_state.db = load_local_data(selected_years)
+        st.session_state.db = load_local_data(st.session_state.selected_years)
         st.success(f"{len(st.session_state.db)}개의 문항을 불러왔습니다.")
 
     st.divider()
@@ -244,7 +244,7 @@ with st.sidebar:
             st.warning("먼저 데이터를 불러와주세요.")
         else:
             with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
-                updated_db, logs = update_from_sheets(st.session_state.db, selected_years)
+                updated_db, logs = update_from_sheets(st.session_state.db, st.session_state.selected_years)
                 st.session_state.db = updated_db
                 st.session_state.update_history = logs
                 if logs:

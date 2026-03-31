@@ -152,49 +152,8 @@ with st.sidebar:
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()
-    
-    st.subheader("📅 범위 선택")
-    # --- 사이드바 내 범위 선택 위젯 수정 ---
-    available_years = [2021, 2022, 2023, 2024, 2025, 2026]
-
-    # 변수 할당(=)을 제거하고 key="selected_years"를 사용합니다.
-    st.multiselect("학습 연도 선택", available_years, key="selected_years")
-    
-    # 기본 데이터 로드 버튼
-    if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
-        st.session_state.db = load_local_data(selected_years)
-        st.success(f"{len(st.session_state.db)}개의 문항을 불러왔습니다.")
-
-    st.divider()
-
-    # 집단지성 반영 버튼
-    st.subheader("🧠 집단지성 (해설 업데이트)")
-    if st.button("✨ 집단지성 반영", use_container_width=True):
-        if st.session_state.db.empty:
-            st.warning("먼저 데이터를 불러와주세요.")
-        else:
-            with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
-                updated_db, logs = update_from_sheets(st.session_state.db, selected_years)
-                st.session_state.db = updated_db
-                st.session_state.update_history = logs
-                if logs:
-                    st.toast(f"{len(logs)}건의 해설이 업데이트되었습니다!")
-                else:
-                    st.toast("변경사항이 없습니다.")
 
 
-    st.divider()
-    
-    # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
-    if st.session_state.update_history:
-        with st.expander("🔍 최근 업데이트 내역 확인"):
-            for log in st.session_state.update_history:
-                st.markdown(f"**[{log['연도']}]** {log['문제']}")
-                st.caption(f"이전: {log['이전 해설']}")
-                st.markdown(f"새해설: {log['바뀐 해설']}")
-                st.divider()
-    should_rerun = False
-    
     st.subheader("⏯️ 시험 진행상황")
     
     # [1] 현재 진행상황 데이터 구성
@@ -263,6 +222,48 @@ with st.sidebar:
         st.rerun()
             
     st.divider()
+    
+    st.subheader("📅 범위 선택")
+    # --- 사이드바 내 범위 선택 위젯 수정 ---
+    available_years = [2021, 2022, 2023, 2024, 2025, 2026]
+
+    # 변수 할당(=)을 제거하고 key="selected_years"를 사용합니다.
+    st.multiselect("학습 연도 선택", available_years, key="selected_years")
+    
+    # 기본 데이터 로드 버튼
+    if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
+        st.session_state.db = load_local_data(selected_years)
+        st.success(f"{len(st.session_state.db)}개의 문항을 불러왔습니다.")
+
+    st.divider()
+
+    # 집단지성 반영 버튼
+    st.subheader("🧠 집단지성 (해설 업데이트)")
+    if st.button("✨ 집단지성 반영", use_container_width=True):
+        if st.session_state.db.empty:
+            st.warning("먼저 데이터를 불러와주세요.")
+        else:
+            with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
+                updated_db, logs = update_from_sheets(st.session_state.db, selected_years)
+                st.session_state.db = updated_db
+                st.session_state.update_history = logs
+                if logs:
+                    st.toast(f"{len(logs)}건의 해설이 업데이트되었습니다!")
+                else:
+                    st.toast("변경사항이 없습니다.")
+
+
+    st.divider()
+    
+    # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
+    if st.session_state.update_history:
+        with st.expander("🔍 최근 업데이트 내역 확인"):
+            for log in st.session_state.update_history:
+                st.markdown(f"**[{log['연도']}]** {log['문제']}")
+                st.caption(f"이전: {log['이전 해설']}")
+                st.markdown(f"새해설: {log['바뀐 해설']}")
+                st.divider()
+    should_rerun = False
 
     st.subheader("💾 데이터 관리")
     csv_dn = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')

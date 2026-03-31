@@ -152,7 +152,7 @@ with st.sidebar:
     st.divider()
     st.markdown(f"""
         <div style="font-size: 0.8rem; color: #888888; line-height: 1.2; margin-top: -10px;">
-        16기 유각준<br>(15기 김새봄 선배님 프로그램 벤치마킹 및 로데이터 사용)
+        16기 유각준<br>(15기 김새봄 선배님이 배포하신 프로그램의 작동방식을 거의 그대로 따랐으며, 로데이터도 그대로 사용함)
         </div>
     """, unsafe_allow_html=True)
 
@@ -183,11 +183,11 @@ with tab1:
                 
                 u_in, c1, c2, c3 = None, *st.columns(3)
                 with c1: 
-                    if st.button("⭕", key=f"o_{idx}", use_container_width=True): u_in = "O"
+                    if st.button("O", key=f"o_{idx}", use_container_width=True): u_in = "O"
                 with c2: 
-                    if st.button("❌", key=f"x_{idx}", use_container_width=True): u_in = "X"
+                    if st.button("X", key=f"x_{idx}", use_container_width=True): u_in = "X"
                 with c3: 
-                    if st.button("❓", key=f"q_{idx}", use_container_width=True): u_in = "?"
+                    if st.button("?", key=f"q_{idx}", use_container_width=True): u_in = "?"
 
                 if u_in and not st.session_state.answered:
                     st.session_state.total_solving_time += (time.time() - st.session_state.q_start_time)
@@ -242,11 +242,11 @@ with tab2:
         cw1, cw2 = st.columns(2)
         act = None
         with cw1:
-            if st.button("⭕!", key="wo1"): act = "O!"
-            if st.button("⭕", key="wo2"): act = "O"
+            if st.button("O!", key="wo1"): act = "O!"
+            if st.button("O", key="wo2"): act = "O"
         with cw2:
-            if st.button("❌!", key="wx1"): act = "X!"
-            if st.button("❌", key="wx2"): act = "X"
+            if st.button("X!", key="wx1"): act = "X!"
+            if st.button("X", key="wx2"): act = "X"
         if act:
             if act[0] == str(qw['정답']).strip().upper():
                 if "!" in act:

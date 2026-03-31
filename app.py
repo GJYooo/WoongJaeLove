@@ -129,6 +129,14 @@ if 'wn_idx' not in st.session_state:
 with st.sidebar:
     st.title("⚖️ 설정")
 
+    # 저작권 표기
+    st.markdown(f"""
+    <div class="copyright">
+    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만들었습니다.<br>
+    <b>(16기 유각준)</b>
+    </div>
+    """, unsafe_allow_html=True)
+    
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()
@@ -192,13 +200,7 @@ with st.sidebar:
 
     st.divider()
 
-    # 저작권 표기
-    st.markdown(f"""
-    <div class="copyright">
-    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만들었습니다.<br>
-    <b>(16기 유각준)</b>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 # --- [메인 화면] ---
 st.title("⚖️ 형사법 선택형 기출 연습")

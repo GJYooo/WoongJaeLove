@@ -97,6 +97,8 @@ with st.sidebar:
     st.download_button("📥 전체 상태 백업 저장", json.dumps(backup, ensure_ascii=False), "quiz_backup.json", "application/json", use_container_width=True)
     
     up_json = st.file_uploader("📤 백업 불러오기", type="json", key="restore_uploader")
+    should_rerun = False
+    
     if up_json and st.session_state.last_restored != up_json.name:
         try:
             data = json.load(up_json)

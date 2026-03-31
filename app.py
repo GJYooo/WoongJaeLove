@@ -127,7 +127,11 @@ if 'wn_idx' not in st.session_state:
 
 # --- [사이드바] ---
 with st.sidebar:
-    st.title("⚖️ 설정 및 집단지성")
+    st.title("⚖️ 설정")
+
+    if st.button("📖 사용방법 보기", use_container_width=True):
+        show_manual()
+    st.divider()
     
     st.subheader("📅 범위 선택")
     available_years = [2021, 2022, 2023, 2024, 2025, 2026]
@@ -166,9 +170,7 @@ with st.sidebar:
 
     st.divider()
     
-    if st.button("📖 사용방법 보기", use_container_width=True):
-        show_manual()
-    st.divider()
+
 
     # 오답 데이터 백업 및 복구
     st.subheader("💾 데이터 관리")

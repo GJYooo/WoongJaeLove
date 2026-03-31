@@ -5,37 +5,67 @@ import os
 import time
 import json
 
-# --- [1. 팝업창 및 페이지 설정] ---
+# --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
 def show_manual():
-    if os.path.exists("manual.png"):
-        st.image("manual.png", use_container_width=True)
-    else:
-        st.error("manual.png 파일을 찾을 수 없습니다. GitHub에 파일을 올려주세요.")
+    # 저장한 이미지 파일명을 넣으세요. (예: manual.png)
+    st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
+# --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
 
-# --- [2. CSS 디자인: 가독성 및 사이드바 최적화] ---
+# 구글 시트 정보 (사용자가 제공한 ID)
+SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
+# 시트별 GID 매핑 (구글 시트 하단 탭을 클릭했을 때 주소창의 gid= 뒤의 숫자입니다)
+# 현재는 예시로 2026년이 gid=0이라고 가정합니다. 실제 시트의 gid로 수정하시면 됩니다.
+GID_MAP = {
+    2021: "2095370762", # 실제 gid로 수정 필요
+    2022: "1893230281",
+    2023: "1090949368",
+    2024: "781284367",
+    2025: "251633672",
+    2026: "0"  # 제공해주신 링크의 gid가 0이므로 기본값 설정
+}
+
+# CSS: 가독성 및 디자인
 st.markdown("""
     <style>
+    /* 문제 박스 디자인 */
     .question-box {
-        background-color: #f1f3f5; color: #000000 !important; padding: 20px;
-        border-radius: 12px; border-left: 8px solid #2e7d32; margin-bottom: 10px;
-        font-size: 1.1rem; font-weight: 500; line-height: 1.5;
+        background-color: #f1f3f5;
+        color: #000000 !important;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 8px solid #2e7d32;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        line-height: 1.5;
     }
+    
+    /* 버튼 디자인 */
     .stButton>button {
-        height: 3em; font-size: 16px !important; font-weight: bold !important;
-        color: #ffffff !important; background-color: #262730; border-radius: 8px;
+        height: 3em;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        color: #ffffff !important;
+        background-color: #262730;
+        border-radius: 8px;
     }
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
-    [data-testid="stSidebar"] hr { margin-top: 0.2rem !important; margin-bottom: 0.2rem !important; }
+
+    /* 사이드바 내부 간격 촘촘하게 조절 */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.3rem !important; 
+    }
+    [data-testid="stSidebar"] hr {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- [3. 데이터 로직 함수] ---
-SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
-GID_MAP = {2021: "2095370762", 2022: "1893230281", 2023: "1090949368", 2024: "781284367", 2025: "251633672", 2026: "0"}
+# --- [데이터 로드 및 업데이트 로직] ---
 
 def load_local_data(years):
     combined_df = pd.DataFrame()
@@ -44,6 +74,7 @@ def load_local_data(years):
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, encoding='utf-8-sig')
+                # 연도를 문자열로 변환하여 소수점 발생 방지
                 df['연도'] = str(year) 
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
             except:
@@ -55,228 +86,386 @@ def load_local_data(years):
 def update_from_sheets(current_db, selected_years):
     update_log = []
     updated_db = current_db.copy()
+    
     for year in selected_years:
         gid = GID_MAP.get(year, "0")
         url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
+        
         try:
             sheet_df = pd.read_csv(url)
-            for _, row in sheet_df.iterrows():
-                target_mask = updated_db['문제'] == row['문제']
+            # 문제 내용을 기준으로 해설 비교 및 업데이트
+            for idx, row in sheet_df.iterrows():
+                problem = row['문제']
+                new_exp = row['해설']
+                
+                # 현재 로드된 데이터에서 같은 문제 찾기
+                target_mask = updated_db['문제'] == problem
                 if target_mask.any():
                     old_exp = updated_db.loc[target_mask, '해설'].values[0]
-                    if str(old_exp) != str(row['해설']):
-                        updated_db.loc[target_mask, '해설'] = row['해설']
-                        update_log.append({"연도": f"{year}년", "문제": row['문제'][:30] + "...", "바뀐 해설": row['해설']})
-        except: continue
+                    
+                    # 해설이 달라진 경우에만 업데이트
+                    if str(old_exp) != str(new_exp):
+                        updated_db.loc[target_mask, '해설'] = new_exp
+                        update_log.append({
+                            "연도": f"{year}년",
+                            "문제": problem[:30] + "...",
+                            "이전 해설": old_exp,
+                            "바뀐 해설": new_exp
+                        })
+        except Exception as e:
+            st.sidebar.error(f"{year}년 시트 로드 실패: {e}")
+            
     return updated_db, update_log
 
-# --- [4. 세션 상태 초기화] ---
-if 'db' not in st.session_state: st.session_state.db = pd.DataFrame()
-if 'wrong_notes' not in st.session_state: st.session_state.wrong_notes = pd.DataFrame(columns=['문제', '정답', '해설', '연도'])
-if 'exam_list' not in st.session_state: st.session_state.exam_list = []
-if 'idx' not in st.session_state: st.session_state.idx = 0
-if 'answered' not in st.session_state: st.session_state.answered = False
-if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
+# --- [세션 상태 초기화] ---
+if 'db' not in st.session_state:
+    st.session_state.db = pd.DataFrame()
+if 'update_history' not in st.session_state:
+    st.session_state.update_history = []
+if 'wrong_notes' not in st.session_state:
+    st.session_state.wrong_notes = pd.DataFrame(columns=['문제', '정답', '해설', '연도'])
+if 'exam_list' not in st.session_state:
+    st.session_state.exam_list = []
+if 'idx' not in st.session_state:
+    st.session_state.idx = 0
+if 'answered' not in st.session_state:
+    st.session_state.answered = False
+if 'wn_idx' not in st.session_state:
+    st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
 if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
-if 'wn_idx' not in st.session_state: st.session_state.wn_idx = 0
-if 'update_history' not in st.session_state: st.session_state.update_history = []
-if 'last_restored' not in st.session_state: st.session_state.last_restored = None
-if 'selected_years' not in st.session_state: st.session_state.selected_years = [2026]
+if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
 
-# --- [5. 사이드바 구성] ---
+
+
+# --- [사이드바] ---
 with st.sidebar:
-    st.title("⚖️ 설정 및 관리")
+    st.title("⚖️ 설정")
+
+    
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()
     
-    # 1. 범위 선택 및 데이터 로드
     st.subheader("📅 범위 선택")
     available_years = [2021, 2022, 2023, 2024, 2025, 2026]
-    st.session_state.selected_years = st.multiselect("학습 연도 선택", available_years, default=st.session_state.selected_years)
+    selected_years = st.multiselect("학습 연도 선택", available_years, default=[2026])
+    
+    # 기본 데이터 로드 버튼
     if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
-        st.session_state.db = load_local_data(st.session_state.selected_years)
-        st.toast(f"{len(st.session_state.db)}개 문항 로드 완료!")
+        st.session_state.db = load_local_data(selected_years)
+        st.success(f"{len(st.session_state.db)}개의 문항을 불러왔습니다.")
+
+    st.divider()
+
+    # 집단지성 반영 버튼
+    st.subheader("🧠 집단지성 (해설 업데이트)")
+    if st.button("✨ 집단지성 반영", use_container_width=True):
+        if st.session_state.db.empty:
+            st.warning("먼저 데이터를 불러와주세요.")
+        else:
+            with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
+                updated_db, logs = update_from_sheets(st.session_state.db, selected_years)
+                st.session_state.db = updated_db
+                st.session_state.update_history = logs
+                if logs:
+                    st.toast(f"{len(logs)}건의 해설이 업데이트되었습니다!")
+                else:
+                    st.toast("변경사항이 없습니다.")
+
 
     st.divider()
     
-    # 🔄 복구 프로세스 제어 변수
-    should_rerun = False
+    # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
+    if st.session_state.update_history:
+        with st.expander("🔍 최근 업데이트 내역 확인"):
+            for log in st.session_state.update_history:
+                st.markdown(f"**[{log['연도']}]** {log['문제']}")
+                st.caption(f"이전: {log['이전 해설']}")
+                st.markdown(f"새해설: {log['바뀐 해설']}")
+                st.divider()
 
-    # 2. 통합 저장 및 복구(JSON)
-    st.subheader("⏯️ 진행상황 통합 저장(JSON)")
-    if not st.session_state.db.empty:
-        backup = {
-            "exam_list": st.session_state.exam_list, "idx": st.session_state.idx,
-            "correct_count": st.session_state.correct_count, "total_solving_time": st.session_state.total_solving_time,
-            "wrong_notes": st.session_state.wrong_notes.to_dict('records'), "selected_years": st.session_state.selected_years
-        }
-        st.download_button("📥 전체 상태 백업 저장", json.dumps(backup, ensure_ascii=False), "full_backup.json", "application/json", use_container_width=True)
+    st.subheader("⏯️ 전체 상태 통합 저장")
     
-    up_json = st.file_uploader("📤 백업 불러오기", type="json", key="json_restore")
-    if up_json and st.session_state.last_restored != up_json.name:
+    # [1] 현재 모든 상태(시험 진행 + 오답노트 전체)를 하나로 묶기
+    if st.session_state.get('db') is not None:
+        # 오답노트 데이터프레임을 저장 가능한 리스트 형태로 변환
+        wn_list = st.session_state.wrong_notes.to_dict('records')
+        
+        combined_progress = {
+            "exam_list": st.session_state.get('exam_list', []),
+            "idx": st.session_state.get('idx', 0),
+            "correct_count": st.session_state.get('correct_count', 0),
+            "total_solving_time": st.session_state.get('total_solving_time', 0.0),
+            "wrong_notes": wn_list, # 오답노트 몽땅 포함!
+            "selected_years": selected_years
+        }
+        
+        progress_json = json.dumps(combined_progress, ensure_ascii=False)
+        
+        st.download_button(
+            label="📥 전체 상태 백업 (시험+오답)",
+            data=progress_json,
+            file_name="full_backup.json",
+            mime="application/json",
+            use_container_width=True
+        )
+    # [2] 통합 백업 파일 불러오기 
+    uploaded_backup = st.file_uploader("📤 백업 파일 불러오기 (.json)", type="json", key="full_backup_loader")
+    
+    if uploaded_backup:
         try:
-            data = json.load(up_json)
-            st.session_state.selected_years = data.get("selected_years", [2026])
-            st.session_state.db = load_local_data(st.session_state.selected_years)
+            # 파일 읽기
+            data = json.load(uploaded_backup)
+            
+            # --- [핵심] 불러온 연도 정보를 바탕으로 데이터베이스(db) 자동 로드 ---
+            years_to_restore = data.get("selected_years", [2026])
+            # 앱 상단의 load_local_data 함수를 직접 호출하여 db를 먼저 채워줍니다.
+            st.session_state.db = load_local_data(years_to_restore)
+            
+            # 시험 진행 상황 복구
             st.session_state.exam_list = data.get("exam_list", [])
             st.session_state.idx = data.get("idx", 0)
             st.session_state.correct_count = data.get("correct_count", 0)
             st.session_state.total_solving_time = data.get("total_solving_time", 0.0)
-            st.session_state.wrong_notes = pd.DataFrame(data.get("wrong_notes", []))
+            
+            # 오답노트 전체 복구
+            if data.get("wrong_notes"):
+                st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
+            
+            # 상태 초기화
             st.session_state.answered = False
             st.session_state.q_start_time = time.time()
-            st.session_state.last_restored = up_json.name
-            st.toast("통합 복구 완료! 🎉")
-            time.sleep(0.5)
-            should_rerun = True 
-        except: st.error("JSON 복구 실패")
+            
+            st.success("모든 데이터가 복구되었습니다! 즉시 학습을 이어갑니다.")
+            
+            # --- [중요] 즉시 화면 새로고침 ---
+            # 이 코드가 있어야 '데이터 불러오기' 버튼을 누르지 않아도 화면이 즉시 업데이트됩니다.
+            st.rerun() 
+            
+        except Exception as e:
+            st.error(f"백업 파일을 읽는 중 오류 발생: {e}")
 
-    st.divider()
-
-    # 3. 오답노트 개별 관리(CSV) - 동기화 기능 제거됨
-    st.subheader("💾 오답 전용 관리(CSV)")
+    # 오답 데이터 백업 및 복구
+    st.subheader("💾 데이터 관리")
+    # 저장 버튼
     csv_data = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')
-    st.download_button("📥 오답노트만 저장", csv_data, "my_wrong_notes.csv", "text/csv", use_container_width=True)
+    st.download_button(
+        label="📥 내 오답노트 저장",
+        data=csv_data,
+        file_name="my_wrong_notes.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
     
-    up_csv = st.file_uploader("📤 오답노트만 복구", type="csv", key="csv_restore")
-    if up_csv and st.session_state.last_restored != up_csv.name:
-        try:
-            st.session_state.wrong_notes = pd.read_csv(up_csv)
-            st.session_state.last_restored = up_csv.name
-            st.toast("오답노트 복구 완료!")
-            time.sleep(0.5)
-            should_rerun = True
-        except: st.error("CSV 복구 실패")
-
-    if should_rerun:
-        st.rerun()
+    # 불러오기 버튼
+    uploaded_file = st.file_uploader("📤 오답노트 복구", type="csv")
+    if uploaded_file:
+        st.session_state.wrong_notes = pd.read_csv(uploaded_file)
+        st.success("오답노트 복구 완료!")
 
     st.divider()
 
-    # 4. 집단지성
-    st.subheader("🧠 집단지성")
-    if st.button("✨ 최신 해설 업데이트", use_container_width=True):
-        if st.session_state.db.empty: st.warning("데이터를 먼저 불러오세요.")
-        else:
-            with st.spinner("업데이트 중..."):
-                st.session_state.db, logs = update_from_sheets(st.session_state.db, st.session_state.selected_years)
-                st.session_state.update_history = logs
-                st.toast("업데이트 완료!")
-
-    st.divider()
+    # 저작권 표기
     st.markdown(f"""
-        <div style="font-size: 0.8rem; color: #888888; line-height: 1.2; margin-top: -10px;">
-        16기 유각준<br>(15기 김새봄 선배님 프로그램 벤치마킹 및 로데이터 사용)<br>
-        <span style="color: #555555;"><b>원래 나만 쓰려고 만들었는데 특별히 김사빈도 쓸 수 있음</b></span>
-        </div>
+    <div class="copyright">
+    <br>
+    16기 유각준 <br> 
+    (15기 김새봄님이 배포하신 프로그램의 작동방식을 벤치마킹했으며, 로데이터 역시 그대로 사용하였습니다)
+    </div>    
     """, unsafe_allow_html=True)
 
-# --- [6. 메인 화면: 탭 구성] ---
+# --- [메인 화면] ---
 st.title("⚖️ 형사법 선택형 기출 연습")
+
 tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
 
-# --- Tab 1: 중간고사 연습 (순수 풀이 시간 측정) ---
-with tab1:
-    if st.session_state.db.empty: st.info("사이드바에서 '데이터 불러오기'를 눌러주세요.")
-    else:
-        num = st.number_input("문항 수", 1, len(st.session_state.db), min(10, len(st.session_state.db)), key="m_num")
-        if st.button("🚀 새 시험 시작", use_container_width=True, key="start_quiz"):
-            st.session_state.exam_list = st.session_state.db.sample(n=num).to_dict('records')
-            st.session_state.idx = 0; st.session_state.answered = False; st.session_state.correct_count = 0
-            st.session_state.total_solving_time = 0.0; st.session_state.q_start_time = time.time(); st.rerun()
+# 현재 로드된 데이터 참조
+db = st.session_state.db
 
-        if st.session_state.exam_list:
-            idx, exam = st.session_state.idx, st.session_state.exam_list
-            if idx < len(exam):
-                q = exam[idx]
+# --- Tab 1: 중간고사 연습 ---
+with tab1:
+    if db.empty:
+        st.info("사이드바에서 데이터를 불러오세요.")
+    else:
+        # 시험 설정
+        num = st.number_input("출제 문항 수", 1, len(db), min(10, len(db)), key="mid_num")
+        if st.button("🚀 새 시험 시작", key="mid_start", use_container_width=True):
+            st.session_state.exam_list = db.sample(n=num).to_dict('records')
+            st.session_state.idx = 0
+            st.session_state.answered = False
+            st.session_state.correct_count = 0
+            st.session_state.total_solving_time = 0.0  # 누적 풀이 시간 초기화
+            st.session_state.q_start_time = time.time()  # 첫 번째 문제 시작 시간 기록
+            st.rerun()
+
+        if st.session_state.get('exam_list'):
+            exam = st.session_state.exam_list
+            curr_idx = st.session_state.idx
+            
+            # [A] 문제 풀이 모드
+            if curr_idx < len(exam):
+                q = exam[curr_idx]
+                st.progress((curr_idx + 1) / len(exam))
+                
+                # 문제 출력 전, 만약 타이머가 안 돌아가고 있다면 (다음 문제로 넘어온 직후) 시작 시간 기록
                 if not st.session_state.answered and st.session_state.q_start_time is None:
                     st.session_state.q_start_time = time.time()
-                st.progress((idx + 1) / len(exam))
-                ry = str(q.get('연도', '미분류')).split('.')[0]
-                st.write(f"**문제 {idx+1} / {len(exam)}** ({ry}년)")
+
+                raw_year = str(q.get('연도', '미분류')).split('.')[0]
+                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
                 st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
                 
-                u_in, c1, c2, c3 = None, *st.columns(3)
-                with c1: 
-                    if st.button("⭕ O", key=f"o_{idx}", use_container_width=True): u_in = "O"
-                with c2: 
-                    if st.button("❌ X", key=f"x_{idx}", use_container_width=True): u_in = "X"
-                with c3: 
-                    if st.button("❓ ?", key=f"q_{idx}", use_container_width=True): u_in = "?"
+                user_input = None
+                b_cols = st.columns(3)
+                with b_cols[0]: 
+                    if st.button("O", key=f"o_{curr_idx}", use_container_width=True): user_input = "O"
+                with b_cols[1]: 
+                    if st.button("X", key=f"x_{curr_idx}", use_container_width=True): user_input = "X"
+                with b_cols[2]: 
+                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True): user_input = "?"
 
-                if u_in and not st.session_state.answered:
-                    st.session_state.total_solving_time += (time.time() - st.session_state.q_start_time)
-                    st.session_state.q_start_time = None; st.session_state.answered = True
-                    ans = str(q['정답']).strip().upper()
-                    is_correct = (u_in == ans) if u_in != "?" else False
-                    st.session_state.last_is_correct = is_correct
-                    if is_correct: 
-                        st.session_state.correct_count += 1; st.success("정답입니다! ✨")
-                    else: 
-                        st.error(f"오답입니다. (정답: {ans})")
+                # 사용자가 답을 선택한 순간!
+                if user_input and not st.session_state.answered:
+                    # [핵심] 여기서 풀이 시간 측정 중단 및 누적
+                    solve_duration = time.time() - st.session_state.q_start_time
+                    st.session_state.total_solving_time += solve_duration
+                    st.session_state.q_start_time = None # 타이머 초기화 (해설 읽는 동안은 안 돌아감)
+                    
+                    st.session_state.answered = True
+                    correct_ans = str(q['정답']).strip().upper()
+                    
+                    if user_input == "?":
+                        st.session_state.last_is_correct = False
+                    else:
+                        is_correct = (user_input == correct_ans)
+                        st.session_state.last_is_correct = is_correct
+                        if is_correct:
+                            st.session_state.correct_count += 1
+                    
+                    if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                             st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
+                    
+                    st.session_state.last_exp = q['해설']
+                    st.session_state.last_ans = correct_ans
 
+                # 해설 출력 구역 (여기에 머무는 시간은 통계에 포함되지 않음)
                 if st.session_state.answered:
-                    with st.expander("📖 해설 보기", expanded=True): st.write(q['해설'])
-                    cn1, cn2 = st.columns(2)
-                    with cn1:
+                    if st.session_state.last_is_correct:
+                        st.success("정답입니다! ✨")
+                    else:
+                        st.error(f"오답입니다. (정답: {st.session_state.last_ans})")
+
+                    with st.expander("📖 해설 보기", expanded=True):
+                        st.write(st.session_state.last_exp)
+                    
+                    c_n1, c_n2 = st.columns(2)
+                    with c_n1:
                         if st.session_state.last_is_correct:
-                            if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key=f"ma_{idx}", use_container_width=True):
+                            if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True):
                                 if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                     st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
-                                    st.toast("추가 완료!")
-                    with cn2:
-                        label = "결과 확인 📊" if idx == len(exam)-1 else "다음 문제 ➡️"
-                        if st.button(label, key=f"nx_{idx}", use_container_width=True):
-                            st.session_state.idx += 1; st.session_state.answered = False; st.rerun()
-            else:
-                st.balloons(); st.header("📊 시험 결과 리포트")
-                total_q, correct_q = len(exam), st.session_state.correct_count
-                t_solve = st.session_state.total_solving_time
-                r1, r2, r3 = st.columns(3)
-                r1.metric("맞은 문제", f"{correct_q} / {total_q}")
-                r2.metric("정답률", f"{(correct_q/total_q*100):.1f}%")
-                r3.metric("순수 풀이 시간", f"{t_solve:.1f}초")
-                st.metric("문제당 평균 시간", f"{(t_solve/total_q):.1f}초")
-                if st.button("시험 종료 및 초기화 🔄", use_container_width=True, key="reset_exam"): 
-                    st.session_state.exam_list = []; st.session_state.idx = 0; st.rerun()
+                                    st.toast("오답노트 수동 추가 완료!")
+                    with c_n2:
+                        btn_label = "결과 확인하기 📊" if curr_idx == len(exam) - 1 else "다음 문제 ➡️"
+                        if st.button(btn_label, key=f"next_{curr_idx}", use_container_width=True):
+                            st.session_state.idx += 1
+                            st.session_state.answered = False
+                            # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
+                            st.rerun()
 
-# --- Tab 2: 오답 집중 복습 (네비게이션 기능) ---
+            # [B] 시험 결과 리포트
+            else:
+                st.balloons()
+                st.header("📊 순수 풀이 결과 리포트")
+                st.caption("※ 해설을 읽은 시간은 포함되지 않은 '순수 문제 풀이' 통계입니다.")
+                
+                total_q = len(exam)
+                correct_q = st.session_state.correct_count
+                accuracy = (correct_q / total_q) * 100
+                total_solve_time = st.session_state.total_solving_time
+                avg_time = total_solve_time / total_q
+                
+                col_res1, col_res2, col_res3 = st.columns(3)
+                col_res1.metric("맞은 문제", f"{correct_q} / {total_q}")
+                col_res2.metric("정답률", f"{accuracy:.1f}%")
+                col_res3.metric("순수 풀이 시간", f"{total_solve_time:.1f}초")
+                
+                col_res4, col_res5 = st.columns(2)
+                col_res4.metric("문제당 평균 풀이 시간", f"{avg_time:.1f}초")
+                
+                st.divider()
+                if st.button("새로운 시험 시작하기 🔄", use_container_width=True):
+                    st.session_state.exam_list = []
+                    st.session_state.idx = 0
+                    st.session_state.total_solving_time = 0.0
+                    st.rerun()
+
+
+
+# --- Tab 2: 오답 집중 복습 (네비게이션 기능 추가) ---
 with tab2:
     wn = st.session_state.wrong_notes
-    if wn.empty: st.info("오답 노트가 비어 있습니다.")
+    if wn.empty:
+        st.info("오답 노트가 비어 있습니다.")
     else:
-        if st.session_state.wn_idx >= len(wn): st.session_state.wn_idx = 0
-        n1, n2, n3 = st.columns([1,2,1])
-        with n1:
-            if st.button("⬅️ 이전", key="wn_prev_btn"): st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn); st.rerun()
-        with n2: st.markdown(f"<p style='text-align:center;'>{st.session_state.wn_idx + 1} / {len(wn)}</p>", unsafe_allow_html=True)
-        with n3:
-            if st.button("다음 ➡️", key="wn_next_btn"): st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn); st.rerun()
+        # 오답 개수에 따라 인덱스가 범위를 벗어나지 않도록 조정
+        if st.session_state.wn_idx >= len(wn):
+            st.session_state.wn_idx = 0
+
+        # 상단 네비게이션 바
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 2, 1])
+        with col_nav1:
+            if st.button("⬅️ 이전 오답", use_container_width=True, key="wn_prev"):
+                st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn)
+                st.rerun()
+        with col_nav2:
+            st.markdown(f"<p style='text-align: center; font-weight: bold;'>오답 {st.session_state.wn_idx + 1} / {len(wn)}</p>", unsafe_allow_html=True)
+        with col_nav3:
+            if st.button("다음 오답 ➡️", use_container_width=True, key="wn_next_nav"):
+                st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn)
+                st.rerun()
+
+        # 현재 인덱스의 오답 가져오기
+        q_wn = wn.iloc[st.session_state.wn_idx]
         
-        qw = wn.iloc[st.session_state.wn_idx]
-        ry_w = str(qw.get('연도', '미분류')).split('.')[0]
-        st.markdown(f'<div class="question-box"><b>[{ry_w}년]</b><br><br>{qw["문제"]}</div>', unsafe_allow_html=True)
+        # 연도 소수점 제거 로직
+        raw_year_wn = str(q_wn.get('연도', '미분류')).split('.')[0]
+        st.markdown(f'<div class="question-box"><b>[{raw_year_wn}년]</b><br><br>{q_wn["문제"]}</div>', unsafe_allow_html=True)
+        
+        # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)
-        act = None
+        wn_act = None
         with cw1:
-            if st.button("⭕ O !", key="wn_o1"): act = "O!"
-            if st.button("⭕ O", key="wn_o2"): act = "O"
+            if st.button("O !", key="wo1"): wn_act = "O!"
+            if st.button("O", key="wo2"): wn_act = "O"
         with cw2:
-            if st.button("❌ X !", key="wn_x1"): act = "X!"
-            if st.button("❌ X", key="wn_x2"): act = "X"
-        if act:
-            if act[0] == str(qw['정답']).strip().upper():
-                if "!" in act:
+            if st.button("X !", key="wx1"): wn_act = "X!"
+            if st.button("X", key="wx2"): wn_act = "X"
+            
+        if wn_act:
+            c_wn_ans = str(q_wn['정답']).strip().upper()
+            if wn_act[0] == c_wn_ans:
+                if "!" in wn_act:
+                    # '확실함(!)' 선택 시 해당 항목 삭제
                     st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
-                    st.toast("삭제됨!"); time.sleep(0.3); st.rerun()
-                else: st.info("정답!")
-            else: st.error("오답!")
-            with st.expander("📖 해설", expanded=True): st.write(qw['해설'])
+                    st.success("확실히 암기 완료! 오답 노트에서 제외되었습니다.")
+                    # 인덱스 조정 (리스트가 줄어들었으므로)
+                    if st.session_state.wn_idx >= len(st.session_state.wrong_notes) and len(st.session_state.wrong_notes) > 0:
+                        st.session_state.wn_idx = 0
+                    st.rerun()
+                else:
+                    st.info("정답입니다! (해설 확인 후 넘어가세요)")
+            else:
+                st.error("틀렸습니다! 다시 확인해 보세요.")
+            
+            with st.expander("📖 해설 확인", expanded=True):
+                st.markdown(f"### 정답: {c_wn_ans}")
+                st.write(q_wn['해설'])
+
 
 # --- Tab 3: 전체 조회 ---
 with tab3:
-    if not st.session_state.db.empty: st.dataframe(st.session_state.db, use_container_width=True)
+    st.header("📚 전체 문제 조회")
+    st.dataframe(db, use_container_width=True)

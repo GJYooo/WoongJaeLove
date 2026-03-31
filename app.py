@@ -13,7 +13,7 @@ def show_manual():
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
-st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
+st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
 
 # 구글 시트 정보 (사용자가 제공한 ID)
 SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
@@ -120,6 +120,10 @@ def update_from_sheets(current_db, selected_years):
 # --- [세션 상태 초기화] ---
 if 'db' not in st.session_state:
     st.session_state.db = pd.DataFrame()
+if 'selected_years' not in st.session_state: 
+    st.session_state.selected_years = [2026] # 초기 연도 설정
+if 'last_restored_file' not in st.session_state:
+    st.session_state.last_restored_file = None # 중복 복구 방지용
 if 'update_history' not in st.session_state:
     st.session_state.update_history = []
 if 'wrong_notes' not in st.session_state:
@@ -149,7 +153,7 @@ with st.sidebar:
     
     st.subheader("📅 범위 선택")
     available_years = [2021, 2022, 2023, 2024, 2025, 2026]
-    selected_years = st.multiselect("학습 연도 선택", available_years, default=[2026])
+    st.session_state.selected_years = st.multiselect("학습 연도 선택", available_years, default=st.session_state.selected_years)
     
     # 기본 데이터 로드 버튼
     if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
@@ -211,20 +215,40 @@ with st.sidebar:
 
     st.divider()
 
-    # [2] 진행상황 불러오기
-    uploaded_progress = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json")
-    if uploaded_progress:
+    # [2] 진행상황 불러오기 (버그 수정 및 연도 연동 버전)
+    uploaded_progress = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json", key="prog_loader")
+    
+    # 파일이 새로 올라왔고, 아직 처리되지 않은 파일일 때만 실행 (무한루프/넘어가기 버그 방지)
+    if uploaded_progress and st.session_state.last_restored_file != uploaded_progress.name:
         try:
             data = json.load(uploaded_progress)
+            
+            # 1. 사이드바 연도 및 실제 데이터(DB) 복구
+            restore_years = data.get("selected_years", [2026])
+            st.session_state.selected_years = restore_years # 사이드바 UI 연동
+            st.session_state.db = load_local_data(restore_years) # 실제 문제 데이터 로드
+            
+            # 2. 시험 진행 정보 복구
             st.session_state.exam_list = data["exam_list"]
             st.session_state.idx = data["idx"]
             st.session_state.correct_count = data["correct_count"]
             st.session_state.total_solving_time = data["total_solving_time"]
+            
+            # 3. 상태 정리
             st.session_state.answered = False
-            st.session_state.q_start_time = time.time() # 불러온 시점부터 다시 타이머 시작
-            st.success("이전 진행상황을 불러왔습니다! '선택 범위 데이터 불러오기' 버튼을 눌러주세요.")
+            st.session_state.q_start_time = time.time()
+            
+            # 4. 복구 완료 마킹 (이 파일은 처리가 끝났음을 기록)
+            st.session_state.last_restored_file = uploaded_progress.name
+            
+            st.toast("진행상황과 학습 연도를 모두 복구했습니다! 🎉")
+            time.sleep(0.5)
+            st.rerun() # UI와 데이터를 즉시 새로고침
+            
         except Exception as e:
-            st.error(f"파일 형식이 잘못되었습니다: {e}")
+            if "RerunException" not in str(type(e)):
+                st.error(f"파일 복구 중 오류 발생: {e}")
+
 
     # 오답 데이터 백업 및 복구
     st.subheader("💾 데이터 관리")
@@ -250,13 +274,13 @@ with st.sidebar:
     st.markdown(f"""
     <div class="copyright">
     <br>
-    16기 유각준<br>
+    16기 유각준 <br>
     (15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬)<br>
     </div>    
     """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
-st.title("⚖️ 2026 형실연 중간고사 연습")
+st.title("⚖️ 형사법 선택형 기출 연습")
 
 tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
 
@@ -343,7 +367,7 @@ with tab1:
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
                         if st.session_state.last_is_correct:
-                            if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True):
+                            if st.button("🤔 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True):
                                 if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                     st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
                                     st.toast("오답노트 수동 추가 완료!")

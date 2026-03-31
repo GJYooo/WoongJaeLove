@@ -31,30 +31,36 @@ GID_MAP = {
 # CSS: 가독성 및 디자인
 st.markdown("""
     <style>
+    /* 문제 박스 디자인 */
     .question-box {
         background-color: #f1f3f5;
         color: #000000 !important;
-        padding: 25px;
+        padding: 20px;
         border-radius: 12px;
         border-left: 8px solid #2e7d32;
-        margin-bottom: 25px;
-        font-size: 1.2rem;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
         font-weight: 500;
-        line-height: 1.6;
+        line-height: 1.5;
     }
+    
+    /* 버튼 디자인 */
     .stButton>button {
-        height: 3.5em;
-        font-size: 17px !important;
+        height: 3em;
+        font-size: 16px !important;
         font-weight: bold !important;
         color: #ffffff !important;
         background-color: #262730;
-        border-radius: 10px;
+        border-radius: 8px;
     }
-    .copyright {
-        font-size: 0.85rem;
-        color: #888888;
-        line-height: 1.4;
-        margin-top: 20px;
+
+    /* 사이드바 내부 간격 촘촘하게 조절 */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.3rem !important; 
+    }
+    [data-testid="stSidebar"] hr {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -245,7 +251,7 @@ with st.sidebar:
     <div class="copyright">
     15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
     </div>    
-    """, unsafe_allow_html=True
+    """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
 st.title("⚖️ 형사법 선택형 기출 연습")

@@ -329,6 +329,7 @@ with tab1:
                     st.session_state.q_start_time = time.time()
 
                 raw_year_display = str(q.get('연도', '미분류')).split('.')[0]
+                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({q.get('연도', '미분류')}년)")
                 clean_question = str(q["문제"]).replace('<', '〈').replace('>', '〉')
                 st.markdown(f'<div class="question-box"><b>[{raw_year_display}년]</b><br><br>{clean_question}</div>', unsafe_allow_html=True)
                 

@@ -139,8 +139,8 @@ with st.sidebar:
     # 저작권 표기
     st.markdown(f"""
     <div class="copyright">
-    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만들었습니다.<br>
-    <b>(16기 유각준)</b>
+    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
+    <b>원래 나만 쓸 수 있는데 특별히 김사빈도 쓸 수 있음</b>
     </div>
     """, unsafe_allow_html=True)
     
@@ -174,6 +174,9 @@ with st.sidebar:
                 else:
                     st.toast("변경사항이 없습니다.")
 
+
+    st.divider()
+    
     # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
     if st.session_state.update_history:
         with st.expander("🔍 최근 업데이트 내역 확인"):
@@ -185,7 +188,7 @@ with st.sidebar:
 
     st.divider()
     
-    st.divider()
+    
     st.subheader("⏯️ 시험 진행상황")
     
     # [1] 현재 진행상황 데이터 구성

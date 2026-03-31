@@ -268,14 +268,29 @@ with tab1:
                     st.session_state.last_exp = q['해설']
                     st.session_state.last_ans = correct_ans
 
+
                 if st.session_state.answered:
                     with st.expander("📖 정답 및 해설 보기", expanded=True):
                         st.markdown(f"### 정답: {st.session_state.last_ans}")
                         st.write(st.session_state.last_exp)
-                    if st.button("다음 문제 ➡️", key="mid_next", use_container_width=True):
-                        st.session_state.idx += 1
-                        st.session_state.answered = False
-                        st.rerun()
+                    
+                    # 수동 오답노트 추가 및 다음 문제 이동 버튼
+                    col_next1, col_next2 = st.columns(2)
+                    with col_next1:
+                        if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key="manual_add_wn", use_container_width=True):
+                            if q['문제'] not in st.session_state.wrong_notes['문제'].values:
+                                new_row = pd.DataFrame([q])
+                                st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
+                                st.toast("오답 노트에 수동으로 추가되었습니다! 💾")
+                            else:
+                                st.toast("이미 오답 노트에 있는 문제입니다. ⚠️")
+                                
+                    with col_next2:
+                        if st.button("다음 문제 ➡️", key="mid_next", use_container_width=True):
+                            st.session_state.idx += 1
+                            st.session_state.answered = False
+                            st.rerun()
+                            
             else:
                 st.balloons()
                 st.success("시험이 종료되었습니다! 오답 노트를 확인해 보세요.")

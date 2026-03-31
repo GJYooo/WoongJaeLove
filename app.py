@@ -66,11 +66,12 @@ def load_local_data(years):
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, encoding='utf-8-sig')
-                df['연도'] = year
+                # 연도를 문자열로 변환하여 소수점 발생 방지
+                df['연도'] = str(year) 
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
             except:
                 df = pd.read_csv(filename, encoding='utf-8')
-                df['연도'] = year
+                df['연도'] = str(year)
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
     return combined_df
 
@@ -218,15 +219,15 @@ with tab1:
                 st.session_state.answered = False
                 st.rerun()
 
-        if st.session_state.exam_list:
-            exam = st.session_state.exam_list
-            curr_idx = st.session_state.idx
+if st.session_state.exam_list:
+            q = st.session_state.exam_list[st.session_state.idx]
+            st.progress((st.session_state.idx + 1) / len(st.session_state.exam_list))
             
-            if curr_idx < len(exam):
-                q = exam[curr_idx]
-                st.progress((curr_idx + 1) / len(exam))
-                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({q.get('연도', '미분류')}년)")
-                st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
+            # 연도 출력 시 소수점 제거 (.0 제거)
+            raw_year = str(q.get('연도', '미분류')).split('.')[0]
+            st.write(f"**문제 {st.session_state.idx + 1} / {len(st.session_state.exam_list)}** ({raw_year}년)")
+            
+            st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
                 
                 user_input = None
                 b_cols = st.columns(5)
@@ -273,13 +274,15 @@ with tab1:
 # --- Tab 2: 오답 집중 복습 ---
 with tab2:
     wn = st.session_state.wrong_notes
-    if wn.empty:
+    if wn.empty: 
         st.info("오답 노트가 비어 있습니다.")
     else:
         st.subheader(f"남은 오답: {len(wn)}개")
         q_wn = wn.iloc[0]
-        st.markdown(f'<div class="question-box"><b>[출처: {q_wn.get("연도", "미분류")}년]</b><br><br>{q_wn["문제"]}</div>', unsafe_allow_html=True)
         
+        # 연도 출력 시 소수점 제거 (.0 제거)
+        raw_year_wn = str(q_wn.get('연도', '미분류')).split('.')[0]
+        st.markdown(f'<div class="question-box"><b>[{raw_year_wn}년]</b><br><br>{q_wn["문제"]}</div>', unsafe_allow_html=True)
         cw1, cw2 = st.columns(2)
         wn_act = None
         with cw1:

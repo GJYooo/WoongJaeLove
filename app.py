@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import random
 import os
-import time 
+import time
+import json
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
@@ -184,7 +185,44 @@ with st.sidebar:
 
     st.divider()
     
+    st.divider()
+    st.subheader("⏯️ 시험 진행상황")
+    
+    # [1] 현재 진행상황 데이터 구성
+    if st.session_state.get('exam_list') and not st.session_state.get('is_finished', False):
+        progress_data = {
+            "exam_list": st.session_state.exam_list,
+            "idx": st.session_state.idx,
+            "correct_count": st.session_state.correct_count,
+            "total_solving_time": st.session_state.total_solving_time,
+            "selected_years": selected_years # 당시 선택했던 연도 정보
+        }
+        progress_json = json.dumps(progress_data, ensure_ascii=False)
+        
+        st.download_button(
+            label="📥 현재 진행상황 저장",
+            data=progress_json,
+            file_name="quiz_progress.json",
+            mime="application/json",
+            use_container_width=True
+        )
+    else:
+        st.caption("진행 중인 시험이 없습니다.")
 
+    # [2] 진행상황 불러오기
+    uploaded_progress = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json")
+    if uploaded_progress:
+        try:
+            data = json.load(uploaded_progress)
+            st.session_state.exam_list = data["exam_list"]
+            st.session_state.idx = data["idx"]
+            st.session_state.correct_count = data["correct_count"]
+            st.session_state.total_solving_time = data["total_solving_time"]
+            st.session_state.answered = False
+            st.session_state.q_start_time = time.time() # 불러온 시점부터 다시 타이머 시작
+            st.success("이전 진행상황을 불러왔습니다! '중간고사 연습' 탭으로 가세요.")
+        except Exception as e:
+            st.error(f"파일 형식이 잘못되었습니다: {e}")
 
     # 오답 데이터 백업 및 복구
     st.subheader("💾 데이터 관리")

@@ -122,6 +122,8 @@ if 'idx' not in st.session_state:
     st.session_state.idx = 0
 if 'answered' not in st.session_state:
     st.session_state.answered = False
+if 'wn_idx' not in st.session_state:
+    st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 
 # --- [사이드바] ---
 with st.sidebar:
@@ -274,19 +276,37 @@ with tab1:
                 st.balloons()
                 st.success("시험이 종료되었습니다! 오답 노트를 확인해 보세요.")
 
-
-# --- Tab 2: 오답 집중 복습 ---
+# --- Tab 2: 오답 집중 복습 (네비게이션 기능 추가) ---
 with tab2:
     wn = st.session_state.wrong_notes
-    if wn.empty: 
+    if wn.empty:
         st.info("오답 노트가 비어 있습니다.")
     else:
-        st.subheader(f"남은 오답: {len(wn)}개")
-        q_wn = wn.iloc[0]
+        # 오답 개수에 따라 인덱스가 범위를 벗어나지 않도록 조정
+        if st.session_state.wn_idx >= len(wn):
+            st.session_state.wn_idx = 0
+
+        # 상단 네비게이션 바
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 2, 1])
+        with col_nav1:
+            if st.button("⬅️ 이전 오답", use_container_width=True, key="wn_prev"):
+                st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn)
+                st.rerun()
+        with col_nav2:
+            st.markdown(f"<p style='text-align: center; font-weight: bold;'>오답 {st.session_state.wn_idx + 1} / {len(wn)}</p>", unsafe_allow_html=True)
+        with col_nav3:
+            if st.button("다음 오답 ➡️", use_container_width=True, key="wn_next_nav"):
+                st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn)
+                st.rerun()
+
+        # 현재 인덱스의 오답 가져오기
+        q_wn = wn.iloc[st.session_state.wn_idx]
         
-        # 연도 출력 시 소수점 제거 (.0 제거)
+        # 연도 소수점 제거 로직
         raw_year_wn = str(q_wn.get('연도', '미분류')).split('.')[0]
         st.markdown(f'<div class="question-box"><b>[{raw_year_wn}년]</b><br><br>{q_wn["문제"]}</div>', unsafe_allow_html=True)
+        
+        # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)
         wn_act = None
         with cw1:
@@ -300,18 +320,22 @@ with tab2:
             c_wn_ans = str(q_wn['정답']).strip().upper()
             if wn_act[0] == c_wn_ans:
                 if "!" in wn_act:
-                    st.session_state.wrong_notes = wn.drop(wn.index[0]).reset_index(drop=True)
-                    st.success("삭제되었습니다!")
+                    # '확실함(!)' 선택 시 해당 항목 삭제
+                    st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
+                    st.success("확실히 암기 완료! 오답 노트에서 제외되었습니다.")
+                    # 인덱스 조정 (리스트가 줄어들었으므로)
+                    if st.session_state.wn_idx >= len(st.session_state.wrong_notes) and len(st.session_state.wrong_notes) > 0:
+                        st.session_state.wn_idx = 0
+                    st.rerun()
                 else:
-                    st.info("정답입니다! (해설 확인 후 다음 버튼을 누르세요)")
+                    st.info("정답입니다! (해설 확인 후 넘어가세요)")
             else:
-                st.error("틀렸습니다!")
+                st.error("틀렸습니다! 다시 확인해 보세요.")
             
             with st.expander("📖 해설 확인", expanded=True):
-                st.write(f"**정답: {c_wn_ans}**")
+                st.markdown(f"### 정답: {c_wn_ans}")
                 st.write(q_wn['해설'])
-            if st.button("다음 오답 ➡️", key="wn_next", use_container_width=True):
-                st.rerun()
+
 
 # --- Tab 3: 전체 조회 ---
 with tab3:

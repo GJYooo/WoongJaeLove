@@ -141,12 +141,9 @@ with st.sidebar:
     <div class="copyright">
     15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
     <b>원래 나만 쓰려고 만들었는데 특별히 김사빈도 쓸 수 있음</b>
-    </div>    
-    """, unsafe_allow_html=True    
+    </div>
 
-# --- [디자인 및 레이아웃 설정] ---
-st.markdown("""
-    <style>
+     <style>
     /* 1. 문제 박스: 배경 밝게, 글자 검정색 고정 */
     .question-box {
         background-color: #f1f3f5;
@@ -200,9 +197,9 @@ st.markdown("""
         padding-top: 10px;
         border-top: 1px solid #eeeeee;
     }
-    </style>
+    </style>    
     """, unsafe_allow_html=True)
-    
+
     
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()

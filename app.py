@@ -14,7 +14,7 @@ def show_manual():
         st.error("manual.png 파일을 찾을 수 없습니다. GitHub에 파일을 올려주세요.")
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
-st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
+st.set_page_config(page_title="2026 형실연 중간고사 대비", layout="wide", page_icon="⚖️")
 
 # --- [2. CSS 디자인 (간격 및 가독성)] ---
 st.markdown("""
@@ -157,7 +157,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- [6. 메인 화면] ---
-st.title("⚖️ 형사법 선택형 기출 연습")
+st.title("⚖️ 2026 형실연 중간고사 연습")
 tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
 
 db = st.session_state.db

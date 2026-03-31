@@ -247,11 +247,11 @@ with tab1:
                 user_input = None
                 b_cols = st.columns(3)
                 with b_cols[0]: 
-                    if st.button("⭕ O", key=f"o_{curr_idx}", use_container_width=True): user_input = "O"
+                    if st.button("O", key=f"o_{curr_idx}", use_container_width=True): user_input = "O"
                 with b_cols[1]: 
-                    if st.button("❌ X", key=f"x_{curr_idx}", use_container_width=True): user_input = "X"
+                    if st.button("X", key=f"x_{curr_idx}", use_container_width=True): user_input = "X"
                 with b_cols[2]: 
-                    if st.button("❗ ?", key=f"q_{curr_idx}", use_container_width=True): user_input = "?"
+                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True): user_input = "?"
 
                 if user_input:
                     st.session_state.answered = True

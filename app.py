@@ -248,10 +248,9 @@ with st.sidebar:
         except Exception as e:
             if "RerunException" not in str(type(e)):
                 st.error(f"파일 복구 중 오류 발생: {e}")
-
-
-    # 오답 데이터 백업 및 복구
+    # --- [사이드바 내의 오답노트 복구 섹션 수정] ---
     st.subheader("💾 데이터 관리")
+    
     # 저장 버튼
     csv_data = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')
     st.download_button(
@@ -262,11 +261,27 @@ with st.sidebar:
         use_container_width=True
     )
     
-    # 불러오기 버튼
-    uploaded_file = st.file_uploader("📤 오답노트 복구", type="csv")
-    if uploaded_file:
-        st.session_state.wrong_notes = pd.read_csv(uploaded_file)
-        st.success("오답노트 복구 완료!")
+    # 불러오기 버튼 (업데이트 안 되는 버그 수정 버전)
+    uploaded_file = st.file_uploader("📤 오답노트 복구", type="csv", key="csv_restorer")
+    
+    # 파일이 새로 올라왔고, 아직 복구 처리가 되지 않은 파일일 때만 실행
+    if uploaded_file and st.session_state.last_restored_file != uploaded_file.name:
+        try:
+            # 파일 읽기
+            recovered_df = pd.read_csv(uploaded_file)
+            
+            # 세션에 저장
+            st.session_state.wrong_notes = recovered_df
+            
+            # 처리 완료 기록 (이 이름을 기억해서 다음 번엔 또 읽지 않음)
+            st.session_state.last_restored_file = uploaded_file.name
+            
+            st.toast("오답노트 복구가 완료되었습니다! ✅")
+            time.sleep(0.5)
+            st.rerun() # 즉시 반영
+        except Exception as e:
+            if "RerunException" not in str(type(e)):
+                st.error("파일을 읽는 중 오류가 발생했습니다.")
 
     st.divider()
 

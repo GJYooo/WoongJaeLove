@@ -136,23 +136,11 @@ if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
 with st.sidebar:
     st.title("⚖️ 설정")
 
-    # 저작권 표기
     st.markdown(f"""
-    <div class="copyright">
-    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
-    <b>원래 나만 쓰려고 만들었는데 특별히 김사빈도 쓸 수 있음</b>
-    </div>
-    <style>
-    /* ... 기존 버튼 및 문제박스 디자인 생략 ... */
-
-    /* 사이드바 간격 축소 디자인 */
-    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
-    [data-testid="stSidebar"] hr { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 { margin-bottom: -5px !important; }
-    .stFileUploader { margin-bottom: -20px !important; }
-    .copyright { font-size: 0.85rem; color: #888888; margin-top: 10px !important; }
-    </style>
-    
+    <div style="font-size: 0.82rem; color: #888888; line-height: 1.3; margin-top: -15px;">
+        15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
+        <span style="color: #666666;"><b>원래 나만 쓰려고 만들었는데 특별히 김사빈도 쓸 수 있음</b></span>
+    </div>    
     """, unsafe_allow_html=True)
     
     if st.button("📖 사용방법 보기", use_container_width=True):

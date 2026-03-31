@@ -219,36 +219,48 @@ with st.sidebar:
         st.caption("진행 중인 시험이 없습니다.")
 
     st.divider()
-    # [버그 수정] JSON 불러오기
-    up_json = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json", key=f"json_up_{st.session_state.uploader_key}")
-    # [2] 진행상황 불러오기 내부 로직 수정
+
+# [2] 진행상황 불러오기 수정본 (호환성 및 가짜에러 방지)
+    up_json = st.file_uploader("📤 진행상황 불러오기", type="json", key=f"json_up_{st.session_state.uploader_key}")
     if up_json:
         try:
             data = json.load(up_json)
             
-            # [핵심] 불러온 연도를 세션에 주입 (사이드바 체크박스가 자동으로 바뀝니다)
+            # --- 호환성 체크: 키가 없으면 기본값 사용 (.get 사용) ---
             restored_years = data.get("selected_years", [2026])
             st.session_state.selected_years = restored_years 
             
-            # 실제 문제 데이터 로드 및 진행 정보 복구
+            # 데이터 로드
             st.session_state.db = load_local_data(restored_years)
-            st.session_state.exam_list = data["exam_list"]
-            st.session_state.idx = data["idx"]
-            st.session_state.correct_count = data["correct_count"]
-            st.session_state.total_solving_time = data["total_solving_time"]
-            if "wrong_notes" in data: 
+            
+            # 진행 상태 복구 (키가 없어도 에러나지 않게 .get 활용)
+            st.session_state.exam_list = data.get("exam_list", [])
+            st.session_state.idx = data.get("idx", 0)
+            st.session_state.correct_count = data.get("correct_count", 0)
+            st.session_state.total_solving_time = data.get("total_solving_time", 0.0)
+            
+            if "wrong_notes" in data:
                 st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
             
             st.session_state.answered = False
             st.session_state.q_start_time = time.time()
-            st.session_state.uploader_key += 1 # 업로더 초기화
+            st.session_state.uploader_key += 1 # 성공했으니 업로더 비우기
             
-            # 성공 알림 후 화면 갱신
-            st.toast("진행상황 및 연도 복구 완료! 🎉")
+            st.toast("복구가 완료되었습니다! 🎉")
             time.sleep(0.5)
-            should_rerun = True
-        except: 
-            st.error("JSON 복구 실패")
+            
+            # 💡 중요: rerun을 try 밖으로 빼기 위해 flag 설정
+            should_rerun = True 
+
+        except Exception as e:
+            # RerunException인 경우 에러 메시지를 띄우지 않음
+            if "Rerun" not in str(type(e)):
+                st.error(f"진짜 복구 실패: {e}")
+            else:
+                should_rerun = True
+
+    if 'should_rerun' in locals() and should_rerun:
+        st.rerun()
             
     st.divider()
 

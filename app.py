@@ -210,7 +210,7 @@ tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복�
 # 현재 로드된 데이터 참조
 db = st.session_state.db
 
-# --- Tab 1: 중간고사 연습 (O?, X? 삭제 버전) ---
+# --- Tab 1: 중간고사 연습 (수동 추가 버튼 조건부 활성화 버전) ---
 with tab1:
     if db.empty:
         st.info("사이드바에서 데이터를 불러오세요.")
@@ -220,77 +220,88 @@ with tab1:
             st.session_state.exam_list = db.sample(n=num).to_dict('records')
             st.session_state.idx = 0
             st.session_state.answered = False
+            st.session_state.last_is_correct = False # 정답 여부 저장용 변수 초기화
             st.rerun()
 
-        if st.session_state.exam_list:
-            exam = st.session_state.exam_list
-            curr_idx = st.session_state.idx
+    if st.session_state.exam_list:
+        exam = st.session_state.exam_list
+        curr_idx = st.session_state.idx
+        
+        if curr_idx < len(exam):
+            q = exam[curr_idx]
+            st.progress((curr_idx + 1) / len(exam))
             
-            if curr_idx < len(exam):
-                q = exam[curr_idx]
-                st.progress((curr_idx + 1) / len(exam))
-                
-                raw_year = str(q.get('연도', '미분류')).split('.')[0]
-                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
-                
-                st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
-                
-                # 정답 입력 버튼 (O, X, ? 3개로 단순화)
-                user_input = None
-                b_cols = st.columns(3)
-                with b_cols[0]: 
-                    if st.button("O", key="o", use_container_width=True): user_input = "O"
-                with b_cols[1]: 
-                    if st.button("X", key="x", use_container_width=True): user_input = "X"
-                with b_cols[2]: 
-                    if st.button("?", key="q", use_container_width=True): user_input = "?"
+            raw_year = str(q.get('연도', '미분류')).split('.')[0]
+            st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
+            
+            st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
+            
+            # 정답 입력 버튼
+            user_input = None
+            b_cols = st.columns(3)
+            with b_cols[0]: 
+                if st.button("⭕ O", key="o", use_container_width=True): user_input = "O"
+            with b_cols[1]: 
+                if st.button("❌ X", key="x", use_container_width=True): user_input = "X"
+            with b_cols[2]: 
+                if st.button("❗ ?", key="q", use_container_width=True): user_input = "?"
 
-                if user_input:
-                    st.session_state.answered = True
-                    correct_ans = str(q['정답']).strip().upper()
-                    
-                    if user_input == "?":
-                        is_correct = False
-                        st.error("모름 ➡️ 오답 노트에 저장")
-                    else:
-                        is_correct = (user_input == correct_ans)
-                        if not is_correct:
-                            st.error("오답 ➡️ 오답 노트에 저장")
-                        else:
-                            st.success("정답입니다! ✨")
-                    
-                    # 오답/모름일 경우 자동 저장
+            if user_input:
+                st.session_state.answered = True
+                correct_ans = str(q['정답']).strip().upper()
+                
+                if user_input == "?":
+                    st.session_state.last_is_correct = False
+                    st.error("모름 ➡️ 오답 노트에 자동 저장")
+                else:
+                    is_correct = (user_input == correct_ans)
+                    st.session_state.last_is_correct = is_correct
                     if not is_correct:
-                        if q['문제'] not in st.session_state.wrong_notes['문제'].values:
-                            new_row = pd.DataFrame([q])
-                            st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
-                    
-                    st.session_state.last_exp = q['해설']
-                    st.session_state.last_ans = correct_ans
+                        st.error("오답 ➡️ 오답 노트에 자동 저장")
+                    else:
+                        st.success("정답입니다! ✨")
+                
+                # 틀렸거나 모를 경우 자동 저장
+                if not st.session_state.last_is_correct:
+                    if q['문제'] not in st.session_state.wrong_notes['문제'].values:
+                        new_row = pd.DataFrame([q])
+                        st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
+                
+                st.session_state.last_exp = q['해설']
+                st.session_state.last_ans = correct_ans
 
-                if st.session_state.answered:
-                    with st.expander("📖 정답 및 해설 보기", expanded=True):
-                        st.markdown(f"### 정답: {st.session_state.last_ans}")
-                        st.write(st.session_state.last_exp)
-                    
-                    col_next1, col_next2 = st.columns(2)
-                    with col_next1:
-                        if st.button("🤔 오답노트 추가", key="manual_add_wn", use_container_width=True):
+            if st.session_state.answered:
+                with st.expander("📖 정답 및 해설 보기", expanded=True):
+                    st.markdown(f"### 정답: {st.session_state.last_ans}")
+                    st.write(st.session_state.last_exp)
+                
+                # 버튼 레이아웃 구성
+                col_next1, col_next2 = st.columns(2)
+                
+                with col_next1:
+                    # 정답을 맞힌 경우에만 수동 추가 버튼 활성화
+                    if st.session_state.last_is_correct:
+                        if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key="manual_add_wn", use_container_width=True):
                             if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                 new_row = pd.DataFrame([q])
                                 st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
                                 st.toast("오답 노트에 수동으로 추가되었습니다! 💾")
                             else:
                                 st.toast("이미 오답 노트에 있는 문제입니다. ⚠️")
-                                
-                    with col_next2:
-                        if st.button("다음 문제 ➡️", key="mid_next", use_container_width=True):
-                            st.session_state.idx += 1
-                            st.session_state.answered = False
-                            st.rerun()
-            else:
-                st.balloons()
-                st.success("시험이 종료되었습니다! 오답 노트를 확인해 보세요.")
+                    else:
+                        # 오답인 경우에는 버튼 대신 안내 문구 표시 (공간 맞춤용)
+                        st.write("자동 저장 완료 ✅")
+                            
+                with col_next2:
+                    if st.button("다음 문제 ➡️", key="mid_next", use_container_width=True):
+                        st.session_state.idx += 1
+                        st.session_state.answered = False
+                        st.rerun()
+        else:
+            st.balloons()
+            st.success("시험이 종료되었습니다! 오답 노트를 확인해 보세요.")
+
+
 
 # --- Tab 2: 오답 집중 복습 (네비게이션 기능 추가) ---
 with tab2:

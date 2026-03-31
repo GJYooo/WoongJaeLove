@@ -210,7 +210,7 @@ with st.sidebar:
             mime="application/json",
             use_container_width=True
         )
-    # [2] 통합 백업 파일 불러오기 (자동 로드 및 즉시 실행 버전)
+    # [2] 통합 백업 파일 불러오기 
     uploaded_backup = st.file_uploader("📤 백업 파일 불러오기 (.json)", type="json", key="full_backup_loader")
     
     if uploaded_backup:
@@ -271,7 +271,7 @@ with st.sidebar:
     <div class="copyright">
     <br>
     16기 유각준 <br> 
-    (15기 김새봄님이 배포하신 프로그램의 작동방식에 기반하여 만들었으며, 로데이터 역시 그대로 사용하였습니다)
+    (15기 김새봄님이 배포하신 프로그램의 작동방식을 벤치마킹했으며, 로데이터 역시 그대로 사용하였습니다)
     </div>    
     """, unsafe_allow_html=True)
 

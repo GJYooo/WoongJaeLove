@@ -249,6 +249,7 @@ with st.sidebar:
     # 저작권 표기
     st.markdown(f"""
     <div class="copyright">
+    <br>
     15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
     </div>    
     """, unsafe_allow_html=True)

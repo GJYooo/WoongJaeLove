@@ -287,7 +287,7 @@ with st.sidebar:
     <div class="copyright">
     <br>
     16기 유각준 <br>
-    (15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬)<br>
+    (15기 김새봄 선배님이 배포하신 프로그램 및 데이터를 이용하여 만듬)<br>
     </div>    
     """, unsafe_allow_html=True)
 

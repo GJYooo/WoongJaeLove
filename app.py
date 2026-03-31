@@ -13,7 +13,7 @@ def show_manual():
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
-st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
+st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
 
 # 구글 시트 정보 (사용자가 제공한 ID)
 SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
@@ -154,8 +154,11 @@ with st.sidebar:
     st.divider()
     
     st.subheader("📅 범위 선택")
+    # --- 사이드바 내 범위 선택 위젯 수정 ---
     available_years = [2021, 2022, 2023, 2024, 2025, 2026]
-    st.session_state.selected_years = st.multiselect("학습 연도 선택", available_years, default=st.session_state.selected_years)
+
+    # 변수 할당(=)을 제거하고 key="selected_years"를 사용합니다.
+    st.multiselect("학습 연도 선택", available_years, key="selected_years")
     
     # 기본 데이터 로드 버튼
     if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
@@ -218,23 +221,35 @@ with st.sidebar:
     st.divider()
     # [버그 수정] JSON 불러오기
     up_json = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json", key=f"json_up_{st.session_state.uploader_key}")
+    # [2] 진행상황 불러오기 내부 로직 수정
     if up_json:
         try:
             data = json.load(up_json)
-            st.session_state.selected_years = data.get("selected_years", [2026])
-            st.session_state.db = load_local_data(st.session_state.selected_years)
+            
+            # [핵심] 불러온 연도를 세션에 주입 (사이드바 체크박스가 자동으로 바뀝니다)
+            restored_years = data.get("selected_years", [2026])
+            st.session_state.selected_years = restored_years 
+            
+            # 실제 문제 데이터 로드 및 진행 정보 복구
+            st.session_state.db = load_local_data(restored_years)
             st.session_state.exam_list = data["exam_list"]
             st.session_state.idx = data["idx"]
             st.session_state.correct_count = data["correct_count"]
             st.session_state.total_solving_time = data["total_solving_time"]
-            if "wrong_notes" in data: st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
+            if "wrong_notes" in data: 
+                st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
+            
             st.session_state.answered = False
             st.session_state.q_start_time = time.time()
-            st.session_state.uploader_key += 1 # 버튼 초기화
-            st.toast("진행상황 복구 완료! 🎉")
+            st.session_state.uploader_key += 1 # 업로더 초기화
+            
+            # 성공 알림 후 화면 갱신
+            st.toast("진행상황 및 연도 복구 완료! 🎉")
             time.sleep(0.5)
             should_rerun = True
-        except: st.error("JSON 복구 실패")
+        except: 
+            st.error("JSON 복구 실패")
+            
     st.divider()
 
     st.subheader("💾 데이터 관리")
@@ -264,7 +279,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
-st.title("⚖️ 형사법 선택형 기출 연습")
+st.title("⚖️ 2026 형실연 중간고사 연습")
 
 tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
 

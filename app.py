@@ -13,7 +13,7 @@ def show_manual():
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
-st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
+st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
 
 # 구글 시트 정보 (사용자가 제공한 ID)
 SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
@@ -222,7 +222,7 @@ with st.sidebar:
             st.session_state.total_solving_time = data["total_solving_time"]
             st.session_state.answered = False
             st.session_state.q_start_time = time.time() # 불러온 시점부터 다시 타이머 시작
-            st.success("이전 진행상황을 불러왔습니다! '중간고사 연습' 탭으로 가세요.")
+            st.success("이전 진행상황을 불러왔습니다! '선택 범위 데이터 불러오기' 버튼을 눌러주세요.")
         except Exception as e:
             st.error(f"파일 형식이 잘못되었습니다: {e}")
 
@@ -250,12 +250,13 @@ with st.sidebar:
     st.markdown(f"""
     <div class="copyright">
     <br>
-    15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬(16기 유각준)<br>
+    16기 유각준<br>
+    (15기 김새봄 선배님이 제공하신 파일 및 프로그램을 이용하여 만듬)<br>
     </div>    
     """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
-st.title("⚖️ 형사법 선택형 기출 연습")
+st.title("⚖️ 2026 형실연 중간고사 연습")
 
 tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
 

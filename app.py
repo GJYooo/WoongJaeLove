@@ -114,9 +114,12 @@ with st.sidebar:
             st.session_state.answered = False
             st.session_state.q_start_time = time.time()
             st.session_state.last_restored = up_json.name
-            st.rerun() 
+            should_rerun = True
         except: st.error("복구 실패")
-
+            
+    if should_rerun:
+        st.rerun()
+        
     st.divider()
     st.subheader("💾 오답노트 개별 관리(CSV)")
     csv_data = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')

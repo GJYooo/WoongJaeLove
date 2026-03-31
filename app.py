@@ -199,7 +199,7 @@ with st.sidebar:
             "idx": st.session_state.idx,
             "correct_count": st.session_state.correct_count,
             "total_solving_time": st.session_state.total_solving_time,
-            "selected_years": selected_years # 당시 선택했던 연도 정보
+            "selected_years": st.session_state.selected_years # 당시 선택했던 연도 정보
         }
         progress_json = json.dumps(progress_data, ensure_ascii=False)
         

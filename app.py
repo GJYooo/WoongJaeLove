@@ -281,7 +281,7 @@ with tab1:
                 with col_next1:
                     # 정답을 맞힌 경우에만 수동 추가 버튼 활성화
                     if st.session_state.last_is_correct:
-                        if st.button("🤔 내 생각과 다름 ➡️ 오답노트 추가", key="manual_add_wn", use_container_width=True):
+                        if st.button("🤔 오답노트 추가(맞췄지만 근거가 틀린 경우)", key="manual_add_wn", use_container_width=True):
                             if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                 new_row = pd.DataFrame([q])
                                 st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)

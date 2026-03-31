@@ -270,7 +270,9 @@ with st.sidebar:
     st.markdown(f"""
     <div class="copyright">
     <br>
-    수이아빠 <br> 
+    16기 유각준 <br> 
+    (15기 김새봄님이 배포하신 프로그램의 작동방식에 기반하여 만들었으며 <br>
+    로데이터 역시 그대로 사용하였습니다)
     </div>    
     """, unsafe_allow_html=True)
 

@@ -136,6 +136,8 @@ if 'answered' not in st.session_state:
     st.session_state.answered = False
 if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
+if 'uploader_key' not in st.session_state:
+    st.session_state.uploader_key = 0 # 업로더 초기화용 키
 if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
 if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
 if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
@@ -188,7 +190,7 @@ with st.sidebar:
                 st.caption(f"이전: {log['이전 해설']}")
                 st.markdown(f"새해설: {log['바뀐 해설']}")
                 st.divider()
-    
+    should_rerun = False
     
     st.subheader("⏯️ 시험 진행상황")
     
@@ -214,74 +216,41 @@ with st.sidebar:
         st.caption("진행 중인 시험이 없습니다.")
 
     st.divider()
-
-    # [2] 진행상황 불러오기 (버그 수정 및 연도 연동 버전)
-    uploaded_progress = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json", key="prog_loader")
-    
-    # 파일이 새로 올라왔고, 아직 처리되지 않은 파일일 때만 실행 (무한루프/넘어가기 버그 방지)
-    if uploaded_progress and st.session_state.last_restored_file != uploaded_progress.name:
+    # [버그 수정] JSON 불러오기
+    up_json = st.file_uploader("📤 진행상황 불러오기 (.json)", type="json", key=f"json_up_{st.session_state.uploader_key}")
+    if up_json:
         try:
-            data = json.load(uploaded_progress)
-            
-            # 1. 사이드바 연도 및 실제 데이터(DB) 복구
-            restore_years = data.get("selected_years", [2026])
-            st.session_state.selected_years = restore_years # 사이드바 UI 연동
-            st.session_state.db = load_local_data(restore_years) # 실제 문제 데이터 로드
-            
-            # 2. 시험 진행 정보 복구
+            data = json.load(up_json)
+            st.session_state.selected_years = data.get("selected_years", [2026])
+            st.session_state.db = load_local_data(st.session_state.selected_years)
             st.session_state.exam_list = data["exam_list"]
             st.session_state.idx = data["idx"]
             st.session_state.correct_count = data["correct_count"]
             st.session_state.total_solving_time = data["total_solving_time"]
-            
-            # 3. 상태 정리
+            if "wrong_notes" in data: st.session_state.wrong_notes = pd.DataFrame(data["wrong_notes"])
             st.session_state.answered = False
             st.session_state.q_start_time = time.time()
-            
-            # 4. 복구 완료 마킹 (이 파일은 처리가 끝났음을 기록)
-            st.session_state.last_restored_file = uploaded_progress.name
-            
-            st.toast("진행상황과 학습 연도를 모두 복구했습니다! 🎉")
+            st.session_state.uploader_key += 1 # 버튼 초기화
+            st.toast("진행상황 복구 완료! 🎉")
             time.sleep(0.5)
-            st.rerun() # UI와 데이터를 즉시 새로고침
-            
-        except Exception as e:
-            if "RerunException" not in str(type(e)):
-                st.error(f"파일 복구 중 오류 발생: {e}")
-    # --- [사이드바 내의 오답노트 복구 섹션 수정] ---
+            should_rerun = True
+        except: st.error("JSON 복구 실패")
+    st.divider()
+
     st.subheader("💾 데이터 관리")
+    csv_dn = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')
+    st.download_button("📥 내 오답노트 저장", csv_dn, "my_wrong_notes.csv", "text/csv", use_container_width=True)
     
-    # 저장 버튼
-    csv_data = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')
-    st.download_button(
-        label="📥 내 오답노트 저장",
-        data=csv_data,
-        file_name="my_wrong_notes.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
-    
-    # 불러오기 버튼 (업데이트 안 되는 버그 수정 버전)
-    uploaded_file = st.file_uploader("📤 오답노트 복구", type="csv", key="csv_restorer")
-    
-    # 파일이 새로 올라왔고, 아직 복구 처리가 되지 않은 파일일 때만 실행
-    if uploaded_file and st.session_state.last_restored_file != uploaded_file.name:
+    # [버그 수정] CSV 불러오기
+    up_csv = st.file_uploader("📤 오답노트 복구", type="csv", key=f"csv_up_{st.session_state.uploader_key}")
+    if up_csv:
         try:
-            # 파일 읽기
-            recovered_df = pd.read_csv(uploaded_file)
-            
-            # 세션에 저장
-            st.session_state.wrong_notes = recovered_df
-            
-            # 처리 완료 기록 (이 이름을 기억해서 다음 번엔 또 읽지 않음)
-            st.session_state.last_restored_file = uploaded_file.name
-            
-            st.toast("오답노트 복구가 완료되었습니다! ✅")
+            st.session_state.wrong_notes = pd.read_csv(up_csv)
+            st.session_state.uploader_key += 1 # 버튼 초기화
+            st.toast("오답노트 복구 완료! ✅")
             time.sleep(0.5)
-            st.rerun() # 즉시 반영
-        except Exception as e:
-            if "RerunException" not in str(type(e)):
-                st.error("파일을 읽는 중 오류가 발생했습니다.")
+            should_rerun = True
+        except: st.error("CSV 복구 실패")
 
     st.divider()
 

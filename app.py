@@ -3,6 +3,13 @@ import pandas as pd
 import random
 import os
 
+# --- [팝업창 함수 정의] ---
+@st.dialog("📖 사용방법 가이드", width="large")
+def show_manual():
+    # 저장한 이미지 파일명을 넣으세요. (예: manual.png)
+    st.image("manual.png", use_container_width=True)
+    st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
+
 # --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="형사법 기출 연습 (2021-2026)", layout="wide", page_icon="⚖️")
 
@@ -156,6 +163,10 @@ with st.sidebar:
 
     st.divider()
     
+    if st.button("📖 사용방법 보기", use_container_width=True):
+        show_manual()
+    st.divider()
+
     # 저작권 표기
     st.markdown(f"""
     <div class="copyright">

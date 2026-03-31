@@ -395,8 +395,8 @@ with tab1:
             # [B] 시험 결과 리포트
             else:
                 st.balloons()
-                st.header("📊 순수 풀이 결과 리포트")
-                st.caption("※ 해설을 읽은 시간은 포함되지 않은 '순수 문제 풀이' 통계입니다.")
+                st.header("📊 문제풀이 결과 리포트")
+                st.caption("※ 해설을 읽은 시간은 포함되지 않고 문제를 푼 시간만 포함")
                 
                 total_q = len(exam)
                 correct_q = st.session_state.correct_count
@@ -407,7 +407,7 @@ with tab1:
                 col_res1, col_res2, col_res3 = st.columns(3)
                 col_res1.metric("맞은 문제", f"{correct_q} / {total_q}")
                 col_res2.metric("정답률", f"{accuracy:.1f}%")
-                col_res3.metric("순수 풀이 시간", f"{total_solve_time:.1f}초")
+                col_res3.metric("풀이 시간", f"{total_solve_time:.1f}초")
                 
                 col_res4, col_res5 = st.columns(2)
                 col_res4.metric("문제당 평균 풀이 시간", f"{avg_time:.1f}초")

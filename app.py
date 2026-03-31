@@ -330,7 +330,8 @@ with tab1:
 
                 raw_year = str(q.get('연도', '미분류')).split('.')[0]
                 st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
-                st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
+                clean_question = str(q["문제"]).replace('<', '〈').replace('>', '〉')
+                st.markdown(f'<div class="question-box">{clean_question}</div>', unsafe_allow_html=True)
                 
                 user_input = None
                 b_cols = st.columns(3)
@@ -448,7 +449,8 @@ with tab2:
         
         # 연도 소수점 제거 로직
         raw_year_wn = str(q_wn.get('연도', '미분류')).split('.')[0]
-        st.markdown(f'<div class="question-box"><b>[{raw_year_wn}년]</b><br><br>{q_wn["문제"]}</div>', unsafe_allow_html=True)
+        clean_question_wn = str(q_wn["문제"]).replace('<', '〈').replace('>', '〉')
+        st.markdown(f'<div class="question-box"><b>[{ry_wn}년]</b><br><br>{clean_question_wn}</div>', unsafe_allow_html=True)
         
         # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)

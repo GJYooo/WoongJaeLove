@@ -109,7 +109,7 @@ with st.sidebar:
 
     st.divider()
     st.subheader("🧠 집단지성")
-    if st.button("✨ 최신 해설 업데이트", use_container_width=True):
+    if st.button("✨ 해설 업데이트", use_container_width=True):
         if st.session_state.db.empty: st.warning("데이터를 먼저 불러오세요.")
         else:
             with st.spinner("업데이트 중..."):

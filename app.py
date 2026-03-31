@@ -328,10 +328,9 @@ with tab1:
                 if not st.session_state.answered and st.session_state.q_start_time is None:
                     st.session_state.q_start_time = time.time()
 
-                raw_year = str(q.get('연도', '미분류')).split('.')[0]
-                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
+                raw_year_display = str(q.get('연도', '미분류')).split('.')[0]
                 clean_question = str(q["문제"]).replace('<', '〈').replace('>', '〉')
-                st.markdown(f'<div class="question-box">{clean_question}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="question-box"><b>[{raw_year_display}년]</b><br><br>{clean_question}</div>', unsafe_allow_html=True)
                 
                 user_input = None
                 b_cols = st.columns(3)
@@ -446,11 +445,10 @@ with tab2:
 
         # 현재 인덱스의 오답 가져오기
         q_wn = wn.iloc[st.session_state.wn_idx]
-        
-        # 연도 소수점 제거 로직
-        raw_year_wn = str(q_wn.get('연도', '미분류')).split('.')[0]
+        raw_year_wn_display = str(q_wn.get('연도', '미분류')).split('.')[0]
         clean_question_wn = str(q_wn["문제"]).replace('<', '〈').replace('>', '〉')
-        st.markdown(f'<div class="question-box"><b>[{ry_wn}년]</b><br><br>{clean_question_wn}</div>', unsafe_allow_html=True)
+        
+        st.markdown(f'<div class="question-box"><b>[{raw_year_wn_display}년]</b><br><br>{clean_question_wn}</div>', unsafe_allow_html=True)
         
         # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)

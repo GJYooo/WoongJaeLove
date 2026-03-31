@@ -167,6 +167,26 @@ with st.sidebar:
         show_manual()
     st.divider()
 
+    # 오답 데이터 백업 및 복구
+    st.subheader("💾 데이터 관리")
+    # 저장 버튼
+    csv_data = st.session_state.wrong_notes.to_csv(index=False).encode('utf-8-sig')
+    st.download_button(
+        label="📥 내 오답노트 저장",
+        data=csv_data,
+        file_name="my_wrong_notes.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+    
+    # 불러오기 버튼
+    uploaded_file = st.file_uploader("📤 오답노트 복구", type="csv")
+    if uploaded_file:
+        st.session_state.wrong_notes = pd.read_csv(uploaded_file)
+        st.success("오답노트 복구 완료!")
+
+    st.divider()
+
     # 저작권 표기
     st.markdown(f"""
     <div class="copyright">

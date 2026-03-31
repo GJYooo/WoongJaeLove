@@ -207,28 +207,31 @@ db = st.session_state.db
 # --- Tab 1: 중간고사 연습 ---
 with tab1:
     if db.empty:
-        st.info("왼쪽 사이드바에서 '데이터 불러오기'를 먼저 클릭해주세요.")
+        st.info("사이드바에서 데이터를 불러오세요.")
     else:
-        c1, c2 = st.columns([1, 2])
-        with c1:
-            num = st.number_input("출제 문항 수", 1, len(db), min(10, len(db)), key="mid_num")
-        with c2:
-            if st.button("🚀 새 시험 시작", key="mid_start", use_container_width=True):
-                st.session_state.exam_list = db.sample(n=num).to_dict('records')
-                st.session_state.idx = 0
-                st.session_state.answered = False
-                st.rerun()
+        num = st.number_input("출제 문항 수", 1, len(db), min(10, len(db)), key="mid_num")
+        if st.button("🚀 시험 시작", key="mid_start", use_container_width=True):
+            st.session_state.exam_list = db.sample(n=num).to_dict('records')
+            st.session_state.idx = 0
+            st.session_state.answered = False
+            st.rerun()
 
-if st.session_state.exam_list:
-            q = st.session_state.exam_list[st.session_state.idx]
-            st.progress((st.session_state.idx + 1) / len(st.session_state.exam_list))
+        if st.session_state.exam_list:
+            exam = st.session_state.exam_list
+            curr_idx = st.session_state.idx
             
-            # 연도 출력 시 소수점 제거 (.0 제거)
-            raw_year = str(q.get('연도', '미분류')).split('.')[0]
-            st.write(f"**문제 {st.session_state.idx + 1} / {len(st.session_state.exam_list)}** ({raw_year}년)")
-            
-            st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
+            if curr_idx < len(exam):
+                q = exam[curr_idx]
+                st.progress((curr_idx + 1) / len(exam))
                 
+                # 연도 출력 시 소수점 제거 로직 (.0 제거)
+                raw_year = str(q.get('연도', '미분류')).split('.')[0]
+                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({raw_year}년)")
+                
+                # 문제 출력 (검은 글씨 박스)
+                st.markdown(f'<div class="question-box">{q["문제"]}</div>', unsafe_allow_html=True)
+                
+                # 정답 입력 섹션 (들여쓰기 주의!)
                 user_input = None
                 b_cols = st.columns(5)
                 with b_cols[0]: 
@@ -269,7 +272,8 @@ if st.session_state.exam_list:
                         st.rerun()
             else:
                 st.balloons()
-                st.success("시험이 종료되었습니다!")
+                st.success("시험이 종료되었습니다! 오답 노트를 확인해 보세요.")
+
 
 # --- Tab 2: 오답 집중 복습 ---
 with tab2:

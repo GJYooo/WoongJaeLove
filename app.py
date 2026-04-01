@@ -4,26 +4,6 @@ import random
 import os
 import time
 import json
-import streamlit.components.v1 as components 
-
-# --- [구글 태그 매니저(GTM) 버전 스크립트] ---
-GTM_ID = "GTM-TST7DW8K" # 원우님이 보내주신 ID
-
-def inject_gtm():
-    gtm_js = f"""
-        <!-- Google Tag Manager -->
-        <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
-        new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=True;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        }})(window,document,'script','dataLayer','{GTM_ID}');</script>
-        <!-- End Google Tag Manager -->
-    """
-    # 화면에 보이지 않게 주입
-    components.html(gtm_js, height=0, width=0)
-
-# 앱 실행 시 실행
-inject_gtm()
 
 
 # --- [팝업창 함수 정의] ---

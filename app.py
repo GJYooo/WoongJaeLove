@@ -4,6 +4,7 @@ import random
 import os
 import time
 import json
+import streamlit.components.v1 as components 
 
 # --- [구글 태그 매니저(GTM) 버전 스크립트] ---
 GTM_ID = "GTM-TST7DW8K" # 원우님이 보내주신 ID

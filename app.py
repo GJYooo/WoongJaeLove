@@ -463,14 +463,6 @@ with tab1:
                         st.markdown(f"### 정답: {current_correct_ans}") 
                         st.write(st.session_state.last_exp)
 
-                    milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                    if st.session_state.combo_count in milestones and st.session_state.last_celebrated_idx != st.session_state.idx:
-                        st.balloons() # 풍선
-                        flashy_celebration(st.session_state.combo_count) # 폭죽(JS)
-                        st.toast(f"🔥 {st.session_state.combo_count} COMBO 달성! 정말 대단해요!")
-                        
-                        st.session_state.last_celebrated_idx = st.session_state.idx
-
                     
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
@@ -486,6 +478,14 @@ with tab1:
                             st.session_state.answered = False
                             # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
                             st.rerun()
+
+                    milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                    if st.session_state.combo_count in milestones and st.session_state.last_celebrated_idx != st.session_state.idx:
+                        st.balloons() # 풍선
+                        flashy_celebration(st.session_state.combo_count) # 폭죽(JS)
+                        st.toast(f"🔥 {st.session_state.combo_count} COMBO 달성! 정말 대단해요!")
+                        
+                        st.session_state.last_celebrated_idx = st.session_state.idx
 
             # [B] 시험 결과 리포트
             else:

@@ -421,7 +421,7 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        col_fb_img, col_fb_txt = st.columns([0.1, 0.9], gap="small")
+                        col_fb_img, col_fb_txt = st.columns([0.05, 0.95], gap="small")
                         with col_fb_img:
                             st.image("correct.jpeg", width=50)
                         with col_fb_txt:

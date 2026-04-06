@@ -9,24 +9,20 @@ import json
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
 def show_manual():
-    # 저장한 이미지 파일명을 넣으세요. (예: manual.png)
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
 
-# 구글 시트 정보 (사용자가 제공한 ID)
 SHEET_ID = "14ShaWll86F40k94P_M40aq8TNwB19a3XvO1w6Xxik1s"
-# 시트별 GID 매핑 (구글 시트 하단 탭을 클릭했을 때 주소창의 gid= 뒤의 숫자입니다)
-# 현재는 예시로 2026년이 gid=0이라고 가정합니다. 실제 시트의 gid로 수정하시면 됩니다.
 GID_MAP = {
-    2021: "2095370762", # 실제 gid로 수정 필요
+    2021: "2095370762",
     2022: "1893230281",
     2023: "1090949368",
     2024: "781284367",
     2025: "251633672",
-    2026: "0"  # 제공해주신 링크의 gid가 0이므로 기본값 설정
+    2026: "0"
 }
 
 # CSS: 가독성 및 디자인
@@ -97,7 +93,6 @@ def load_local_data(years):
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, encoding='utf-8-sig')
-                # 연도를 문자열로 변환하여 소수점 발생 방지
                 df['연도'] = str(year) 
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
             except:
@@ -231,7 +226,6 @@ with st.sidebar:
             st.toast("복구가 완료되었습니다! 🎉")
             time.sleep(0.5)
             
-            # 💡 중요: rerun을 try 밖으로 빼기 위해 flag 설정
             should_rerun = True 
 
         except Exception as e:
@@ -247,10 +241,7 @@ with st.sidebar:
     st.divider()
     
     st.subheader("📅 범위 선택")
-    # --- 사이드바 내 범위 선택 위젯 수정 ---
     available_years = [2021, 2022, 2023, 2024, 2025, 2026]
-
-    # 변수 할당(=)을 제거하고 key="selected_years"를 사용합니다.
     st.multiselect("학습 연도 선택", available_years, key="selected_years")
     
     # 기본 데이터 로드 버튼
@@ -365,7 +356,6 @@ with tab1:
                 with b_cols[2]: 
                     if st.button("?", key=f"q_{curr_idx}", use_container_width=True): user_input = "?"
 
-                # 사용자가 답을 선택한 순간!
                 if user_input and not st.session_state.answered:
                     solve_duration = time.time() - st.session_state.q_start_time
                     st.session_state.total_solving_time += solve_duration
@@ -508,12 +498,11 @@ with tab2:
                 st.markdown(f"### 정답: {c_wn_ans}")
                 st.write(q_wn['해설'])
 
-        st.markdown("---") # 구분선 추가
+        st.markdown("---")
         if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent"): # 버튼 key 변경
             st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
             st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
             
-            # 인덱스 조정 (리스트가 줄어들었으므로)
             if len(st.session_state.wrong_notes) == 0:
                 st.session_state.wn_idx = 0 # 오답노트가 비면 인덱스 초기화
             elif st.session_state.wn_idx >= len(st.session_state.wrong_notes):

@@ -394,7 +394,8 @@ with tab1:
                             st.markdown("<span class='wrong-feedback-text'>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
 
                     with st.expander("📖 해설 보기", expanded=True):
-                        st.markdown(f"### 정답: {correct_ans}")
+                        current_correct_ans = str(q['정답']).strip().upper()
+                        st.markdown(f"### 정답: {current_correct_ans}") 
                         st.write(st.session_state.last_exp)
                     
                     c_n1, c_n2 = st.columns(2)

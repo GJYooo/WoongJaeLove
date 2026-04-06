@@ -4,7 +4,48 @@ import random
 import os
 import time
 import json
+import streamlit.components.v1 as components
 
+# --- [축하 이펙트 함수] ---
+def flashy_celebration(combo_level):
+    # 5, 10콤보: 가벼운 꽃가루 / 20, 30, 40: 양쪽 폭죽 / 50 이상: 화면 가득 불꽃놀이
+    if combo_level <= 10:
+        js_code = """
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+        <script>
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        </script>
+        """
+    elif combo_level <= 40:
+        js_code = """
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+        <script>
+            var end = Date.now() + (2 * 1000);
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+        </script>
+        """
+    else: # 50콤보 이상: 역대급 화려한 불꽃놀이
+        js_code = """
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+        <script>
+            var duration = 5 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) { return clearInterval(interval); }
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        </script>
+        """
+    components.html(js_code, height=0)
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
@@ -159,7 +200,8 @@ if 'uploader_key' not in st.session_state:
 if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
 if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
 if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
-
+if 'combo_count' not in st.session_state: 
+    st.session_state.combo_count = 0 
 
 
 # --- [사이드바] ---

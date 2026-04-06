@@ -463,13 +463,13 @@ with tab2:
             feedback_wn_message = ""
             
             if user_choice_wn == c_wn_ans: # 정답인 경우
-                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") # gap="small" 추가
+                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="very small") 
                 with col_feedback_img:
-                    st.image("correct.jpeg", width=30) # 'correct.jpeg' 파일이 있다면 이렇게 사용
+                    st.image("correct.jpeg", width=30) 
                 with col_feedback_text:
                     st.markdown("<span>정답입니다! (해설 확인 후 넘어가세요)</span>", unsafe_allow_html=True)
             else: # 오답인 경우
-                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") # gap="small" 추가
+                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="very small") 
                 with col_feedback_img:
                     st.image("wrong.jpeg", width=30)
                 with col_feedback_text:

@@ -384,9 +384,17 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        st.success("정답입니다! ✨")
+                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
+                        with col_feedback_img:
+                            st.image("correct.jpeg", width=50) 
+                        with col_feedback_text:
+                            st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
                     else:
-                        st.error(f"오답입니다. (정답: {st.session_state.last_ans})")
+                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
+                        with col_feedback_img:
+                            st.image("wrong.jpeg", width=50)
+                        with col_feedback_text:
+                            st.markdown("<span class='wrong-feedback-text'>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
 
                     with st.expander("📖 해설 보기", expanded=True):
                         st.write(st.session_state.last_exp)

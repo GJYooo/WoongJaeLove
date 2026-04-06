@@ -56,7 +56,7 @@ def flashy_celebration(combo_level):
             </script>
         </div>
         """
-    components.html(js_code, height=0)
+    components.html(js_code, height=1200)
 
 
 # --- [팝업창 함수 정의] ---
@@ -479,13 +479,6 @@ with tab1:
                             # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
                             st.rerun()
 
-                    milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                    if st.session_state.combo_count in milestones and st.session_state.last_celebrated_idx != st.session_state.idx:
-                        st.balloons() # 풍선
-                        flashy_celebration(st.session_state.combo_count) # 폭죽(JS)
-                        st.toast(f"🔥 {st.session_state.combo_count} COMBO 달성! 정말 대단해요!")
-                        
-                        st.session_state.last_celebrated_idx = st.session_state.idx
 
             # [B] 시험 결과 리포트
             else:
@@ -593,3 +586,20 @@ with tab2:
 with tab3:
     st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
+
+
+if 'idx' in st.session_state and 'exam_list' in st.session_state:
+    
+    milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    
+    if (st.session_state.get('answered') == True and 
+        st.session_state.get('last_is_correct') == True and 
+        st.session_state.get('combo_count') in milestones and 
+        st.session_state.get('last_celebrated_idx') != st.session_state.idx):
+        
+        # 모든 조건 통과 시 폭죽 가동!
+        st.balloons() 
+        flashy_celebration(st.session_state.combo_count)
+        
+        # 현재 문제 번호를 기록해서 해설창 안에서 다시 안 터지게 막음
+        st.session_state.last_celebrated_idx = st.session_state.idx

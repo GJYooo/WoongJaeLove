@@ -4,63 +4,37 @@ import random
 import os
 import time
 import json
-import streamlit.components.v1 as components
 
+# --- [화려한 축하 이펙트 함수 - CSS 애니메이션 버전] ---
 def flashy_celebration(combo_level):
-    if 5 <= combo_level < 10:
-        js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#26ccff', '#a25afd', '#235ad1'] });
-        </script>
-        """
-    elif 10 <= combo_level < 20:
-        js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, shapes: ['star'], colors: ['FFE400', 'FFBD00', 'E89400'] };
-            confetti({ ...defaults, particleCount: 40, scalar: 1.2 });
-            confetti({ ...defaults, particleCount: 10, scalar: 0.75 });
-        </script>
-        """
+    if 5 <= combo_level < 20:
+        # 1단계: 풍선 효과만 (기본)
+        st.balloons()
+    
     elif 20 <= combo_level < 50:
-        js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var end = Date.now() + 2000;
-            (function frame() {
-                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 } });
-                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 } });
-                if (Date.now() < end) { requestAnimationFrame(frame); }
-            }());
-        </script>
-        """
-    elif 50 <= combo_level < 100:
-        js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var duration = 3000;
-            var animationEnd = Date.now() + duration;
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) { return clearInterval(interval); }
-                confetti({ particleCount: 50, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 } });
-            }, 250);
-        </script>
-        """
-    else: 
-        js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var end = Date.now() + 5000;
-            (function frame() {
-                confetti({ particleCount: 10, spread: 180, origin: { x: Math.random(), y: Math.random() } });
-                if (Date.now() < end) { requestAnimationFrame(frame); }
-            }());
-        </script>
-        """
-    components.html(js_code, height=1)
+        # 2단계: 풍선 + 눈 효과 (화면이 꽉 참)
+        st.balloons()
+        st.snow()
+        st.toast("🔥 대단한 기세입니다! 멈추지 마세요!")
 
+    elif 50 <= combo_level:
+        # 3단계: 화면 전체 색상 반짝임 (레전드 모드)
+        # 화면 배경을 잠깐 금색/흰색으로 깜빡이게 하여 엄청난 시각적 효과를 줍니다.
+        st.balloons()
+        st.snow()
+        st.markdown("""
+            <style>
+            @keyframes flash {
+                0% { background-color: transparent; }
+                50% { background-color: rgba(255, 215, 0, 0.3); }
+                100% { background-color: transparent; }
+            }
+            .stApp {
+                animation: flash 0.5s ease-in-out 3;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        st.toast("🏆 전설적인 기록입니다! 당신은 형사법 마스터!")
 
 
 # --- [팝업창 함수 정의] ---
@@ -447,22 +421,29 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
-                        with col_feedback_img:
-                            st.image("correct.jpeg", width=50) 
-                        with col_feedback_text:
-                            if st.session_state.combo_count >= 50:
-                                st.markdown(f"### <span style='color:#FF0000; font-size:40px; text-shadow:2px 2px 10px gold;'>🏆 LEGENDARY {st.session_state.combo_count} COMBO!! 🏆</span>", unsafe_allow_html=True)
-                            elif st.session_state.combo_count >= 2:
-                                st.markdown(f"### <span style='color:#ff4b4b; text-shadow:1px 1px 2px yellow;'>🔥 {st.session_state.combo_count} COMBO!!</span>", unsafe_allow_html=True)
-                            else:
-                                st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
+                        col_fb_img, col_fb_txt = st.columns([0.1, 0.9], gap="small")
+                        with col_fb_img:
+                            st.image("correct.jpeg", width=50)
+                        with col_fb_txt:
+                            feedback_html = "<span class='correct-feedback-text' style='vertical-align: middle;'>정답입니다!</span>"
+                            
+                            if st.session_state.combo_count >= 2:
+                                if st.session_state.combo_count >= 20:
+                                    combo_style = f"margin-left: 15px; color: #FF0000; font-size: 28px; text-shadow: 1px 1px 5px gold; font-weight: bold; vertical-align: middle;"
+                                    feedback_html += f" <span style='{combo_style}'>🏆 LEGENDARY {st.session_state.combo_count} COMBO!!</span>"
+                                else:
+                                    combo_style = f"margin-left: 10px; color: #ff4b4b; font-size: 22px; font-weight: bold; vertical-align: middle;"
+                                    feedback_html += f" <span style='{combo_style}'>🔥 {st.session_state.combo_count} COMBO!!</span>"
+                            
+                            st.markdown(feedback_html, unsafe_allow_html=True)
+
+                        # 2. 이펙트 실행 (5콤보 이상)
                         if st.session_state.combo_count >= 5:
                             flashy_celebration(st.session_state.combo_count)
-                            
-                            # 보너스: 10단위마다 풍선도 같이 터뜨림
+                            # 10단위 콤보 보너스 풍선
                             if st.session_state.combo_count % 10 == 0:
                                 st.balloons()
+                    
                                 
                     else:
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 

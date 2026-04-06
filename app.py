@@ -480,7 +480,7 @@ with tab2:
                 with col_feedback_img:
                     st.image("correct.jpeg", width=50) 
                 with col_feedback_text:
-                    st.markdown("<span class='correct-feedback-text'>정답입니다! (해설 확인 후 넘어가세요)</span>", unsafe_allow_html=True)
+                    st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
             else: # 오답인 경우
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:

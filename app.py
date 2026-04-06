@@ -54,6 +54,7 @@ st.markdown("""
         background-color: #262730;
         border-radius: 8px;
     }
+
     
     
     .correct-feedback-text {
@@ -70,6 +71,12 @@ st.markdown("""
         border-radius: 5px;
         font-weight: bold;
     }
+
+    div[data-testid="stHorizontalBlock"] {
+        align-items: flex-end !important
+    }
+
+    
     /* 사이드바 내부 간격 촘촘하게 조절 */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0.3rem !important; 

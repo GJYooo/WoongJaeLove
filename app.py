@@ -56,7 +56,7 @@ def flashy_celebration(combo_level):
             </script>
         </div>
         """
-    components.html(js_code, height=1200)
+    components.html(js_code, height=0)
 
 
 # --- [팝업창 함수 정의] ---

@@ -482,6 +482,21 @@ with tab2:
                 st.markdown(f"### 정답: {c_wn_ans}")
                 st.write(q_wn['해설'])
 
+             st.markdown("---")
+
+             if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual"):
+                 st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
+                 st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
+                 
+                 if len(st.session_state.wrong_notes) == 0:
+                     st.session_state.wn_idx = 0
+                 elif st.session_state.wn_idx >= len(st.session_state.wrong_notes):
+                     st.session_state.wn_idx = 0 # 마지막 문제 제거 시 첫 문제로 이동 또는 0으로 설정
+                
+                 st.rerun()
+            
+             st.caption("문제를 완전히 이해하고 기억했다면 이 버튼을 눌러 오답노트에서 제거하세요.")        
+
 
 # --- Tab 3: 전체 조회 ---
 with tab3:

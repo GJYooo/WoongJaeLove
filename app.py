@@ -54,7 +54,22 @@ st.markdown("""
         background-color: #262730;
         border-radius: 8px;
     }
-
+    
+    
+    .correct-feedback-text {
+        background-color: #e6ffed; /* 연한 초록색 배경 */
+        color: #1a7f37; /* 진한 초록색 글씨 */
+        padding: 5px 10px; /* 내부 여백 */
+        border-radius: 5px; /* 모서리 둥글게 */
+        font-weight: bold; /* 글씨 굵게 */
+    }
+    .wrong-feedback-text {
+        background-color: #ffebe8; /* 연한 빨간색 배경 */
+        color: #b02a37; /* 진한 빨간색 글씨 */
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
     /* 사이드바 내부 간격 촘촘하게 조절 */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
         gap: 0.3rem !important; 
@@ -465,13 +480,13 @@ with tab2:
                 with col_feedback_img:
                     st.image("correct.jpeg", width=50) 
                 with col_feedback_text:
-                    st.markdown("<span>정답입니다! (해설 확인 후 넘어가세요)</span>", unsafe_allow_html=True)
+                    st.markdown("<span class='correct-feedback-text'>정답입니다! (해설 확인 후 넘어가세요)</span>", unsafe_allow_html=True)
             else: # 오답인 경우
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:
                     st.image("wrong.jpeg", width=50)
                 with col_feedback_text:
-                    st.markdown("<span>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
+                    st.markdown("<span class='wrong-feedback-text'>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
                     
             
             with st.expander("📖 해설 확인", expanded=True):

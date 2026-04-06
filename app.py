@@ -67,13 +67,13 @@ st.markdown("""
     .wrong-feedback-text {
         background-color: #ffebe8; /* 연한 빨간색 배경 */
         color: #b02a37; /* 진한 빨간색 글씨 */
-        padding: 5px 10px;
+        padding: 5px 15px;
         border-radius: 5px;
         font-weight: bold;
     }
 
     div[data-testid="stHorizontalBlock"] {
-        align-items: stretch !important
+        align-items: center !important
     }
 
     

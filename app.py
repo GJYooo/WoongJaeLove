@@ -420,8 +420,6 @@ with tab1:
                     st.session_state.total_solving_time = 0.0
                     st.rerun()
 
-
-
 # --- Tab 2: 오답 집중 복습 (네비게이션 기능 추가) ---
 with tab2:
     wn = st.session_state.wrong_notes
@@ -454,48 +452,46 @@ with tab2:
         
         # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)
-        wn_act = None
+        user_choice_wn = None
         with cw1:
-            if st.button("O !", key="wo1"): wn_act = "O!"
-            if st.button("O", key="wo2"): wn_act = "O"
+            if st.button("O", key="wo_o_btn"): user_choice_wn = "O"
         with cw2:
-            if st.button("X !", key="wx1"): wn_act = "X!"
-            if st.button("X", key="wx2"): wn_act = "X"
+            if st.button("X", key="wo_x_btn"): user_choice_wn = "X"
             
-        if wn_act:
+        if user_choice_wn:
             c_wn_ans = str(q_wn['정답']).strip().upper()
-            if wn_act[0] == c_wn_ans:
-                if "!" in wn_act:
-                    # '확실함(!)' 선택 시 해당 항목 삭제
-                    st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
-                    st.success("확실히 암기 완료! 오답 노트에서 제외되었습니다.")
-                    # 인덱스 조정 (리스트가 줄어들었으므로)
-                    if st.session_state.wn_idx >= len(st.session_state.wrong_notes) and len(st.session_state.wrong_notes) > 0:
-                        st.session_state.wn_idx = 0
-                    st.rerun()
-                else:
-                    st.info("정답입니다! (해설 확인 후 넘어가세요)")
-            else:
-                st.error("틀렸습니다! 다시 확인해 보세요.")
+            
+            feedback_wn_message = ""
+            if user_choice_wn == c_wn_ans: # 정답인 경우
+                feedback_wn_message = f"""<div class="feedback-container">
+                                            <img src="https://via.placeholder.com/20x20.png?text=✅" alt="Correct" style="height:20px; width:20px;">
+                                            <span>정답입니다! (해설 확인 후 넘어가세요)</span>
+                                        </div>"""
+            else: # 오답인 경우
+                feedback_wn_message = f"""<div class="feedback-container">
+                                        <img src="https://via.placeholder.com/20x20.png?text=❌" alt="Wrong" style="height:20px; width:20px;">
+                                        <span>틀렸습니다! 다시 확인해 보세요.</span>
+                                    </div>"""
+            st.markdown(feedback_wn_message, unsafe_allow_html=True)
             
             with st.expander("📖 해설 확인", expanded=True):
                 st.markdown(f"### 정답: {c_wn_ans}")
                 st.write(q_wn['해설'])
 
-            st.markdown("---")
-
-            if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual"):
-                st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
-                st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
-                 
-                if len(st.session_state.wrong_notes) == 0:
-                    st.session_state.wn_idx = 0
-                elif st.session_state.wn_idx >= len(st.session_state.wrong_notes):
-                    st.session_state.wn_idx = 0 # 마지막 문제 제거 시 첫 문제로 이동 또는 0으로 설정
-                
-                st.rerun()
+        st.markdown("---") # 구분선 추가
+        if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent"): # 버튼 key 변경
+            st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
+            st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
             
-            st.caption("문제를 완전히 이해하고 기억했다면 이 버튼을 눌러 오답노트에서 제거하세요.")        
+            # 인덱스 조정 (리스트가 줄어들었으므로)
+            if len(st.session_state.wrong_notes) == 0:
+                st.session_state.wn_idx = 0 # 오답노트가 비면 인덱스 초기화
+            elif st.session_state.wn_idx >= len(st.session_state.wrong_notes):
+                st.session_state.wn_idx = len(st.session_state.wrong_notes) - 1 # 마지막 문제 제거 시 이전 문제로 이동
+            
+            st.rerun()
+        
+        st.caption("이 문제를 완전히 이해하고 기억했다면 위 버튼을 눌러 오답노트에서 제거할 수 있습니다.")
 
 
 # --- Tab 3: 전체 조회 ---

@@ -457,7 +457,7 @@ with tab1:
                                 st.markdown(f"### <span style='color:#ff4b4b; text-shadow:1px 1px 2px yellow;'>🔥 {st.session_state.combo_count} COMBO!!</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
-                         if st.session_state.combo_count >= 5:
+                        if st.session_state.combo_count >= 5:
                             flashy_celebration(st.session_state.combo_count)
                             
                             # 보너스: 10단위마다 풍선도 같이 터뜨림

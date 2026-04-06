@@ -11,13 +11,13 @@ def flashy_celebration(combo_level):
         # 1단계: 풍선 효과만 (기본)
         st.balloons()
     
-    elif 20 <= combo_level < 50:
+    elif 20 <= combo_level < 20:
         # 2단계: 풍선 + 눈 효과 (화면이 꽉 참)
         st.balloons()
         st.snow()
         st.toast("🔥 대단한 기세입니다! 멈추지 마세요!")
 
-    elif 50 <= combo_level:
+    elif 20 <= combo_level:
         # 3단계: 화면 전체 색상 반짝임 (레전드 모드)
         # 화면 배경을 잠깐 금색/흰색으로 깜빡이게 하여 엄청난 시각적 효과를 줍니다.
         st.balloons()

@@ -345,10 +345,9 @@ with tab1:
 
                 # 사용자가 답을 선택한 순간!
                 if user_input and not st.session_state.answered:
-                    # [핵심] 여기서 풀이 시간 측정 중단 및 누적
                     solve_duration = time.time() - st.session_state.q_start_time
                     st.session_state.total_solving_time += solve_duration
-                    st.session_state.q_start_time = None # 타이머 초기화 (해설 읽는 동안은 안 돌아감)
+                    st.session_state.q_start_time = None 
                     
                     st.session_state.answered = True
                     correct_ans = str(q['정답']).strip().upper()
@@ -368,7 +367,6 @@ with tab1:
                     st.session_state.last_exp = q['해설']
                     st.session_state.last_ans = correct_ans
 
-                # 해설 출력 구역 (여기에 머무는 시간은 통계에 포함되지 않음)
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
                         st.success("정답입니다! ✨")

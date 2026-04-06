@@ -457,22 +457,24 @@ with tab2:
             if st.button("O", key="wo_o_btn"): user_choice_wn = "O"
         with cw2:
             if st.button("X", key="wo_x_btn"): user_choice_wn = "X"
-            
+        
         if user_choice_wn:
             c_wn_ans = str(q_wn['정답']).strip().upper()
-            
             feedback_wn_message = ""
+            
             if user_choice_wn == c_wn_ans: # 정답인 경우
-                feedback_wn_message = f"""<div class="feedback-container">
-                                            <img src="correct.jpeg" alt="Correct" style="height:30px; width:30px;">
-                                            <span>정답입니다! (해설 확인 후 넘어가세요)</span>
-                                        </div>"""
-            else: # 오답인 경우
-                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95]) # 이미지와 텍스트를 위한 컬럼 분할 (비율 조정 가능)
+                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") # gap="small" 추가
                 with col_feedback_img:
-                    st.image("wrong.jpeg", width=30) # st.image()를 사용하여 이미지 로드
+                    st.image("correct.jpeg", width=30) # 'correct.jpeg' 파일이 있다면 이렇게 사용
+                with col_feedback_text:
+                    st.markdown("<span>정답입니다! (해설 확인 후 넘어가세요)</span>", unsafe_allow_html=True)
+            else: # 오답인 경우
+                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") # gap="small" 추가
+                with col_feedback_img:
+                    st.image("wrong.jpeg", width=30)
                 with col_feedback_text:
                     st.markdown("<span>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
+                    
             
             with st.expander("📖 해설 확인", expanded=True):
                 st.markdown(f"### 정답: {c_wn_ans}")

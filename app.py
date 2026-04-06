@@ -470,7 +470,7 @@ with tab2:
             else: # 오답인 경우
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95]) # 이미지와 텍스트를 위한 컬럼 분할 (비율 조정 가능)
                 with col_feedback_img:
-                    st.image("wrong.jpeg", width=20) # st.image()를 사용하여 이미지 로드
+                    st.image("wrong.jpeg", width=30) # st.image()를 사용하여 이미지 로드
                 with col_feedback_text:
                     st.markdown("<span>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
             

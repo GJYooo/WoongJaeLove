@@ -464,12 +464,12 @@ with tab2:
             feedback_wn_message = ""
             if user_choice_wn == c_wn_ans: # 정답인 경우
                 feedback_wn_message = f"""<div class="feedback-container">
-                                            <img src="https://via.placeholder.com/20x20.png?text=✅" alt="Correct" style="height:20px; width:20px;">
+                                            <img src="correct.jpeg" alt="Correct" style="height:30px; width:30px;">
                                             <span>정답입니다! (해설 확인 후 넘어가세요)</span>
                                         </div>"""
             else: # 오답인 경우
                 feedback_wn_message = f"""<div class="feedback-container">
-                                        <img src="https://via.placeholder.com/20x20.png?text=❌" alt="Wrong" style="height:20px; width:20px;">
+                                        <img src="wrong.jpeg" alt="Wrong" style="height:30px; width:30px;">
                                         <span>틀렸습니다! 다시 확인해 보세요.</span>
                                     </div>"""
             st.markdown(feedback_wn_message, unsafe_allow_html=True)

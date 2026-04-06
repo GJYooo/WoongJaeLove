@@ -5,37 +5,6 @@ import os
 import time
 import json
 
-# --- [화려한 축하 이펙트 함수 - CSS 애니메이션 버전] ---
-def flashy_celebration(combo_level):
-    if 5 <= combo_level < 20:
-        # 1단계: 풍선 효과만 (기본)
-        st.balloons()
-    
-    elif 20 <= combo_level < 20:
-        # 2단계: 풍선 + 눈 효과 (화면이 꽉 참)
-        st.balloons()
-        st.snow()
-        st.toast("🔥 대단한 기세입니다! 멈추지 마세요!")
-
-    elif 20 <= combo_level:
-        # 3단계: 화면 전체 색상 반짝임 (레전드 모드)
-        # 화면 배경을 잠깐 금색/흰색으로 깜빡이게 하여 엄청난 시각적 효과를 줍니다.
-        st.balloons()
-        st.snow()
-        st.markdown("""
-            <style>
-            @keyframes flash {
-                0% { background-color: transparent; }
-                50% { background-color: rgba(255, 215, 0, 0.3); }
-                100% { background-color: transparent; }
-            }
-            .stApp {
-                animation: flash 0.5s ease-in-out 3;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-        st.toast("🏆 전설적인 기록입니다! 당신은 형사법 마스터!")
-
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
@@ -190,9 +159,7 @@ if 'uploader_key' not in st.session_state:
 if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
 if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
 if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
-if 'combo_count' not in st.session_state: 
-    st.session_state.combo_count = 0 
-if 'last_celebrated_idx' not in st.session_state: st.session_state.last_celebrated_idx = -1
+
 
 
 # --- [사이드바] ---
@@ -399,18 +366,11 @@ with tab1:
                     
                     if user_input == "?":
                         st.session_state.last_is_correct = False
-                        st.session_state.combo_count = 0
                     else:
                         is_correct = (user_input == correct_ans)
                         st.session_state.last_is_correct = is_correct
                         if is_correct:
                             st.session_state.correct_count += 1
-                            st.session_state.combo_count += 1
-
-                            
-                        else:
-                            st.session_state.combo_count = 0
-                            
                     
                     if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
@@ -421,30 +381,11 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        col_fb_img, col_fb_txt = st.columns([0.05, 0.95], gap="small")
-                        with col_fb_img:
-                            st.image("correct.jpeg", width=50)
-                        with col_fb_txt:
-                            feedback_html = "<span class='correct-feedback-text' style='vertical-align: middle;'>정답입니다!</span>"
-                            
-                            if st.session_state.combo_count >= 2:
-                                if st.session_state.combo_count >= 20:
-                                    combo_style = f"margin-left: 15px; color: #FF0000; font-size: 28px; text-shadow: 1px 1px 5px gold; font-weight: bold; vertical-align: middle;"
-                                    feedback_html += f" <span style='{combo_style}'>🏆 LEGENDARY {st.session_state.combo_count} COMBO!!</span>"
-                                else:
-                                    combo_style = f"margin-left: 10px; color: #ff4b4b; font-size: 22px; font-weight: bold; vertical-align: middle;"
-                                    feedback_html += f" <span style='{combo_style}'>🔥 {st.session_state.combo_count} COMBO!!</span>"
-                            
-                            st.markdown(feedback_html, unsafe_allow_html=True)
-
-                        # 2. 이펙트 실행 (5콤보 이상)
-                        if st.session_state.combo_count >= 5:
-                            flashy_celebration(st.session_state.combo_count)
-                            # 10단위 콤보 보너스 풍선
-                            if st.session_state.combo_count % 10 == 0:
-                                st.balloons()
-                    
-                                
+                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
+                        with col_feedback_img:
+                            st.image("correct.jpeg", width=50) 
+                        with col_feedback_text:
+                            st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
                     else:
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
@@ -456,7 +397,6 @@ with tab1:
                         current_correct_ans = str(q['정답']).strip().upper()
                         st.markdown(f"### 정답: {current_correct_ans}") 
                         st.write(st.session_state.last_exp)
-
                     
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
@@ -472,7 +412,6 @@ with tab1:
                             st.session_state.answered = False
                             # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
                             st.rerun()
-
 
             # [B] 시험 결과 리포트
             else:
@@ -580,8 +519,3 @@ with tab2:
 with tab3:
     st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
-
-
-
-
-

@@ -468,12 +468,11 @@ with tab2:
                                             <span>정답입니다! (해설 확인 후 넘어가세요)</span>
                                         </div>"""
             else: # 오답인 경우
-                feedback_wn_message = f"""<div class="feedback-container">
-                                        <img src="wrong.jpeg" alt="Wrong" style="height:30px; width:30px;">
-                                        <span>틀렸습니다! 다시 확인해 보세요.</span>
-                                    </div>"""
-                st.image("wrong.jpeg")
-            st.markdown(feedback_wn_message, unsafe_allow_html=True)
+                col_feedback_img, col_feedback_text = st.columns([0.05, 0.95]) # 이미지와 텍스트를 위한 컬럼 분할 (비율 조정 가능)
+                with col_feedback_img:
+                    st.image("wrong.jpeg", width=20) # st.image()를 사용하여 이미지 로드
+                with col_feedback_text:
+                    st.markdown("<span>틀렸습니다! 다시 확인해 보세요.</span>", unsafe_allow_html=True)
             
             with st.expander("📖 해설 확인", expanded=True):
                 st.markdown(f"### 정답: {c_wn_ans}")

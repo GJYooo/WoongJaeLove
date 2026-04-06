@@ -7,54 +7,59 @@ import json
 import streamlit.components.v1 as components
 
 def flashy_celebration(combo_level):
-    # 5~9콤보: 중앙에서 가벼운 꽃가루
     if 5 <= combo_level < 10:
         js_code = """
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
         <script>
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, zIndex: 9999 });
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#26ccff', '#a25afd', '#235ad1'] });
         </script>
         """
-    # 10~19콤보: 조금 더 많은 양의 꽃가루
     elif 10 <= combo_level < 20:
         js_code = """
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
         <script>
-            confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, zIndex: 9999 });
+            var defaults = { spread: 360, ticks: 50, gravity: 0, decay: 0.94, startVelocity: 30, shapes: ['star'], colors: ['FFE400', 'FFBD00', 'E89400'] };
+            confetti({ ...defaults, particleCount: 40, scalar: 1.2 });
+            confetti({ ...defaults, particleCount: 10, scalar: 0.75 });
         </script>
         """
-    # 20~49콤보: 양쪽 사이드에서 대포 발사 (2초간)
     elif 20 <= combo_level < 50:
         js_code = """
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
         <script>
-            var end = Date.now() + 1500;
+            var end = Date.now() + 2000;
             (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 9999 });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 9999 });
+                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0, y: 0.6 } });
+                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1, y: 0.6 } });
                 if (Date.now() < end) { requestAnimationFrame(frame); }
             }());
         </script>
         """
-    # 50콤보 이상: 화면 전체 불꽃놀이 (3초간)
-    else:
+    elif 50 <= combo_level < 100:
         js_code = """
         <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
         <script>
             var duration = 3000;
             var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
-            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
             var interval = setInterval(function() {
                 var timeLeft = animationEnd - Date.now();
                 if (timeLeft <= 0) { return clearInterval(interval); }
-                var particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                confetti({ particleCount: 50, startVelocity: 30, spread: 360, origin: { x: Math.random(), y: Math.random() - 0.2 } });
             }, 250);
         </script>
         """
-    components.html(js_code, height=1200)
+    else: 
+        js_code = """
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+        <script>
+            var end = Date.now() + 5000;
+            (function frame() {
+                confetti({ particleCount: 10, spread: 180, origin: { x: Math.random(), y: Math.random() } });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+        </script>
+        """
+    components.html(js_code, height=1)
 
 
 
@@ -446,10 +451,19 @@ with tab1:
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
                         with col_feedback_text:
-                            if st.session_state.combo_count >= 2:
+                            if st.session_state.combo_count >= 50:
+                                st.markdown(f"### <span style='color:#FF0000; font-size:40px; text-shadow:2px 2px 10px gold;'>🏆 LEGENDARY {st.session_state.combo_count} COMBO!! 🏆</span>", unsafe_allow_html=True)
+                            elif st.session_state.combo_count >= 2:
                                 st.markdown(f"### <span style='color:#ff4b4b; text-shadow:1px 1px 2px yellow;'>🔥 {st.session_state.combo_count} COMBO!!</span>", unsafe_allow_html=True)
                             else:
                                 st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
+                         if st.session_state.combo_count >= 5:
+                            flashy_celebration(st.session_state.combo_count)
+                            
+                            # 보너스: 10단위마다 풍선도 같이 터뜨림
+                            if st.session_state.combo_count % 10 == 0:
+                                st.balloons()
+                                
                     else:
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
@@ -589,19 +603,4 @@ with tab3:
 
 
 
-if 'idx' in st.session_state and 'exam_list' in st.session_state:
- 
-    
-    if (st.session_state.get('answered') == True and 
-        st.session_state.get('last_is_correct') == True and 
-        st.session_state.get('combo_count') >= 5 and 
-        st.session_state.get('last_celebrated_idx') != st.session_state.idx):
-        
-        flashy_celebration(st.session_state.combo_count)
-        
-        if st.session_state.combo_count % 5 == 0:
-            st.balloons()
-            st.toast(f"🎉 와우! {st.session_state.combo_count}연승 돌파!! 🎉")
-        
-        st.session_state.last_celebrated_idx = st.session_state.idx
 

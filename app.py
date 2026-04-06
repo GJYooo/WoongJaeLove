@@ -73,7 +73,7 @@ st.markdown("""
     }
 
     div[data-testid="stHorizontalBlock"] {
-        align-items: flex-end !important
+        align-items: stretch !important
     }
 
     

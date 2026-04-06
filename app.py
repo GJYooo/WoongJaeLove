@@ -6,46 +6,58 @@ import time
 import json
 import streamlit.components.v1 as components
 
-# --- [축하 이펙트 함수] ---
+# --- [화려한 축하 이펙트 함수 - 가시성 개선 버전] ---
 def flashy_celebration(combo_level):
     # 5, 10콤보: 가벼운 꽃가루 / 20, 30, 40: 양쪽 폭죽 / 50 이상: 화면 가득 불꽃놀이
     if combo_level <= 10:
         js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        </script>
+        <div id="confetti-wrapper">
+            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+            <script>
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    zIndex: 9999
+                });
+            </script>
+        </div>
         """
     elif combo_level <= 40:
         js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var end = Date.now() + (2 * 1000);
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
-                if (Date.now() < end) { requestAnimationFrame(frame); }
-            }());
-        </script>
+        <div id="confetti-wrapper">
+            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+            <script>
+                var end = Date.now() + (2 * 1000);
+                (function frame() {
+                    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, zIndex: 9999 });
+                    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, zIndex: 9999 });
+                    if (Date.now() < end) { requestAnimationFrame(frame); }
+                }());
+            </script>
+        </div>
         """
-    else: # 50콤보 이상: 역대급 화려한 불꽃놀이
+    else:
         js_code = """
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-        <script>
-            var duration = 5 * 1000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) { return clearInterval(interval); }
-                var particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
-        </script>
+        <div id="confetti-wrapper">
+            <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+            <script>
+                var duration = 5 * 1000;
+                var animationEnd = Date.now() + duration;
+                var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+                function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+                var interval = setInterval(function() {
+                    var timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) { return clearInterval(interval); }
+                    var particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+            </script>
+        </div>
         """
-    components.html(js_code, height=0)
+    components.html(js_code, height=1200)
+
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
@@ -202,6 +214,7 @@ if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
 if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
 if 'combo_count' not in st.session_state: 
     st.session_state.combo_count = 0 
+if 'last_celebrated_idx' not in st.session_state: st.session_state.last_celebrated_idx = -1
 
 
 # --- [사이드바] ---
@@ -415,10 +428,7 @@ with tab1:
                         if is_correct:
                             st.session_state.correct_count += 1
                             st.session_state.combo_count += 1
-                            milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                            if st.session_state.combo_count in milestones:
-                                flashy_celebration(st.session_state.combo_count)
-                                st.toast(f"🔥 {st.session_state.combo_count} COMBO 달성!")
+
                             
                         else:
                             st.session_state.combo_count = 0
@@ -452,6 +462,15 @@ with tab1:
                         current_correct_ans = str(q['정답']).strip().upper()
                         st.markdown(f"### 정답: {current_correct_ans}") 
                         st.write(st.session_state.last_exp)
+
+                    milestones = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                    if st.session_state.combo_count in milestones and st.session_state.last_celebrated_idx != st.session_state.idx:
+                        st.balloons() # 풍선
+                        flashy_celebration(st.session_state.combo_count) # 폭죽(JS)
+                        st.toast(f"🔥 {st.session_state.combo_count} COMBO 달성! 정말 대단해요!")
+                        
+                        st.session_state.last_celebrated_idx = st.session_state.idx
+
                     
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:

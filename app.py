@@ -472,6 +472,7 @@ with tab2:
                                         <img src="wrong.jpeg" alt="Wrong" style="height:30px; width:30px;">
                                         <span>틀렸습니다! 다시 확인해 보세요.</span>
                                     </div>"""
+                st.image("wrong.jpeg")
             st.markdown(feedback_wn_message, unsafe_allow_html=True)
             
             with st.expander("📖 해설 확인", expanded=True):

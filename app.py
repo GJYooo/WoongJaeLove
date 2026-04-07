@@ -394,11 +394,15 @@ with tab1:
                     
                     if user_input == "?":
                         st.session_state.last_is_correct = False
+                        play_sound("wrong.mp3") 
                     else:
                         is_correct = (user_input == correct_ans)
                         st.session_state.last_is_correct = is_correct
                         if is_correct:
+                            play_sound("correct.mp3") 
                             st.session_state.correct_count += 1
+                        else:
+                            play_sound("wrong.mp3") 
                     
                     if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
@@ -409,14 +413,12 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        play_sound("correct.mp3") 
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
                         with col_feedback_text:
                             st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
                     else:
-                        play_sound("wrong.mp3") 
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("wrong.jpeg", width=50)

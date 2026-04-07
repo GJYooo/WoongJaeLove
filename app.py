@@ -39,7 +39,7 @@ GID_MAP = {
     2026: "0"
 }
 
-# --- [디자인 및 레이아웃 최적화 설정] ---
+# --- [모든 디자인 요소 통합 설정] ---
 st.markdown("""
     <style>
     /* 1. 문제 박스: 가독성 중심 */
@@ -49,66 +49,61 @@ st.markdown("""
         margin-bottom: 5px; font-size: 1.1rem; line-height: 1.5;
     }
     
-    /* 2. 메인 버튼: 다크 테마 */
+    /* 2. 메인 버튼: 다크 테마 및 너비 꽉 채움 */
     .stButton>button {
         width: 100% !important; height: 3em; font-size: 16px !important;
         font-weight: bold !important; color: #ffffff !important;
         background-color: #262730; border-radius: 8px; margin-bottom: 5px;
     }
 
-    /* 3. 사이드바 전체 간격 초밀착 조절 */
+    /* 3. 정답/오답 피드백 텍스트 스타일 (복구 완료!) */
+    .correct-feedback-text {
+        background-color: #e6ffed !important; /* 연한 초록색 배경 */
+        color: #1a7f37 !important; /* 진한 초록색 글씨 */
+        padding: 8px 15px !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    .wrong-feedback-text {
+        background-color: #ffebe8 !important; /* 연한 빨간색 배경 */
+        color: #b02a37 !important; /* 진한 빨간색 글씨 */
+        padding: 8px 15px !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
+    /* 4. 사이드바 전체 간격 초밀착 조절 */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.2rem !important; /* 요소들 사이 간격 최소화 */
+        gap: 0.2rem !important;
         padding-top: 1rem !important;
     }
-    
-    /* 구분선(hr) 위아래 여백 제거 */
     [data-testid="stSidebar"] hr {
         margin-top: 0.3rem !important;
         margin-bottom: 0.3rem !important;
     }
 
-    /* 4. 사이드바 메뉴 디자인 (플랫 버튼 스타일) */
-    div[role="radiogroup"] {
-        gap: 5px !important; /* 메뉴 사이 간격 좁게 */
-    }
-
+    /* 5. 사이드바 메뉴 디자인 (슬림 리스트 스타일) */
+    div[role="radiogroup"] { gap: 5px !important; }
     div[role="radiogroup"] > label {
-        padding: 8px 12px !important;
-        border-radius: 8px !important;
-        margin-bottom: 2px !important;
-        background-color: transparent !important; /* 평소엔 투명 */
-        border: none !important; /* 테두리 제거 */
-        transition: 0.2s;
+        padding: 8px 12px !important; border-radius: 8px !important;
+        margin-bottom: 2px !important; background-color: transparent !important;
+        border: none !important; transition: 0.2s;
     }
-
-    /* 메뉴 글자색 조절 */
     div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
-        color: #555555 !important; /* 평소엔 부드러운 회색 */
-        font-weight: 500 !important;
-        font-size: 0.95rem !important;
+        color: #555555 !important; font-weight: 500 !important; font-size: 0.95rem !important;
     }
-
-    /* 마우스 올렸을 때 */
-    div[role="radiogroup"] > label:hover {
-        background-color: #f0f2f6 !important;
-    }
-
-    /* 선택된 메뉴 강조 (진한 초록색 바 스타일) */
+    div[role="radiogroup"] > label:hover { background-color: #f0f2f6 !important; }
     div[role="radiogroup"] > label[data-selected="true"] {
-        background-color: #e8f5e9 !important; /* 아주 연한 초록 배경 */
-        border-left: 5px solid #2e7d32 !important; /* 왼쪽에 강조 선 */
+        background-color: #e8f5e9 !important; border-left: 5px solid #2e7d32 !important;
     }
-
     div[role="radiogroup"] > label[data-selected="true"] div[data-testid="stMarkdownContainer"] p {
-        color: #2e7d32 !important; /* 선택된 글자만 진한 초록색 */
-        font-weight: 700 !important;
+        color: #2e7d32 !important; font-weight: 700 !important;
     }
-
-    /* 라디오 버튼 동그라미 숨기기 */
-    div[role="radiogroup"] [data-baseweb="radio"] > div:first-child {
-        display: none !important;
-    }
+    div[role="radiogroup"] [data-baseweb="radio"] > div:first-child { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 

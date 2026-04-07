@@ -452,7 +452,7 @@ with tab2:
             st.subheader(f"관리 중인 오답: {len(wn)}개")
         with col_shuffle2:
             # 버튼을 누르면 데이터프레임을 무작위로 샘플링하여 다시 저장
-            if st.button("🔀 오답 섞기", use_container_width=True, key="shuffle_wn"):
+            if st.button("🔀 오답 순서 섞기", use_container_width=True, key="shuffle_wn"):
                 st.session_state.wrong_notes = wn.sample(frac=1).reset_index(drop=True)
                 st.session_state.wn_idx = 0 # 순서가 바뀌었으므로 첫 번째 문제부터 시작
                 st.toast("오답 순서가 무작위로 섞였습니다! 🎲")

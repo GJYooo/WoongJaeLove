@@ -5,7 +5,6 @@ import os
 import time
 import json
 import base64
-import streamlit.components.v1 as components
 
 @st.cache_data
 def get_audio_base64(file_path):
@@ -14,10 +13,15 @@ def get_audio_base64(file_path):
     return base64.b64encode(data).decode()
 
 def play_sound(file_path):
-    if not st.session_state.get('sound_on', True):
-        return
-    # 소리를 재생하라는 '신호'만 딱 남깁니다.
-    st.session_state.sound_trigger = file_path
+    b64_string = get_audio_base64(file_path)
+    # 재생 시마다 고유한 ID를 부여하여 브라우저 버퍼링을 방지합니다.
+    timestamp = time.time()
+    md = f"""
+        <audio autoplay="true" id="audio_{timestamp}">
+            <source src="data:audio/mp3;base64,{b64_string}" type="audio/mp3">
+        </audio>
+        """
+    st.markdown(md, unsafe_allow_html=True)
 
 
 # --- [팝업창 함수 정의] ---
@@ -171,26 +175,17 @@ if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0 # 업로더 초기화용 키
-if 'total_solving_time' not in st.session_state:
-    st.session_state.total_solving_time = 0.0
-if 'q_start_time' not in st.session_state:
-    st.session_state.q_start_time = None
-if 'correct_count' not in st.session_state:
-    st.session_state.correct_count = 0
-if 'sound_on' not in st.session_state:
-    st.session_state.sound_on = True  # 기본값은 '켜짐'
-if 'sound_trigger' not in st.session_state:
-    st.session_state.sound_trigger = None
+if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
+if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
+if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
+
 
 
 # --- [사이드바] ---
 with st.sidebar:
     st.title("⚖️ 설정")
 
-    st.subheader("🔊 오디오 설정")
-    st.toggle("🔊 효과음 활성화", key="sound_on")
-    st.divider()
-
+    
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()
@@ -380,51 +375,39 @@ with tab1:
                 with b_cols[2]: 
                     if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="q"): user_input = "?"
 
-
                 if user_input and not st.session_state.answered:
-                    # 1. 시간 및 상태 업데이트
-                    st.session_state.total_solving_time += (time.time() - st.session_state.q_start_time)
-                    st.session_state.q_start_time = None
-                    st.session_state.answered = True
+                    solve_duration = time.time() - st.session_state.q_start_time
+                    st.session_state.total_solving_time += solve_duration
+                    st.session_state.q_start_time = None 
                     
-                    # 2. [가장 중요] 진짜 정답과 내가 누른 버튼 대조
-                    # 정답지(db_ans)와 내 버튼(my_ans)을 똑같이 대문자로 만들고 공백을 지웁니다.
-                    db_ans = str(q['정답']).strip().upper()
-                    my_ans = str(user_input).strip().upper()
-
-                    if my_ans == "?":
-                        # [케이스 1] 모름 버튼 -> 무조건 오답 소리
+                    st.session_state.answered = True
+                    correct_ans = str(q['정답']).strip().upper()
+                    
+                    if user_input == "?":
                         st.session_state.last_is_correct = False
-                        play_sound("wrong.mp3") 
                     else:
-                        # [케이스 2] O 또는 X 버튼을 눌렀을 때
-                        if my_ans == db_ans:
-                            # 정답을 맞힌 경우 (X가 답인데 X를 눌러도 여기로 옵니다!)
-                            st.session_state.last_is_correct = True
+                        is_correct = (user_input == correct_ans)
+                        st.session_state.last_is_correct = is_correct
+                        if is_correct:
                             st.session_state.correct_count += 1
-                            play_sound("correct.mp3") # 무조건 정답 소리!!
-                        else:
-                            # 틀린 경우
-                            st.session_state.last_is_correct = False
-                            play_sound("wrong.mp3") # 무조건 오답 소리!!
-
-                    # 3. 오답노트 자동 저장 (틀렸거나 모를 때만)
+                    
                     if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
-                            new_row = pd.DataFrame([q])
-                            st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
+                            st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
                     
                     st.session_state.last_exp = q['해설']
-                    st.session_state.last_ans = db_ans
+                    st.session_state.last_ans = correct_ans
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
+                        play_sound("correct.mp3") 
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
                         with col_feedback_text:
                             st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
                     else:
+                        play_sound("wrong.mp3") 
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("wrong.jpeg", width=50)
@@ -571,20 +554,3 @@ with tab2:
 with tab3:
     st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
-
-if st.session_state.get('sound_trigger'):
-    sound_to_play = st.session_state.sound_trigger
-    st.session_state.sound_trigger = None 
-    
-    audio_data = get_audio_base64(sound_to_play)
-    if audio_data:
-        js_template = """
-            <script>
-                var audio = new Audio("data:audio/mp3;base64,{B64_DATA}");
-                audio.volume = 0.4;
-                audio.play();
-            </script>
-        """
-        js_code = js_template.replace("{B64_DATA}", audio_data)
-        
-        components.html(js_code, height=0, width=0)

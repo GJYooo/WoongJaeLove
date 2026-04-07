@@ -486,9 +486,9 @@ with tab2:
         cw1, cw2 = st.columns(2)
         user_choice_wn = None
         with cw1:
-            if st.button("O", key="wo_o_btn"): user_choice_wn = "O"
+            if st.button("O", key="wo_o_btn", use_container_width=True): user_choice_wn = "O"
         with cw2:
-            if st.button("X", key="wo_x_btn"): user_choice_wn = "X"
+            if st.button("X", key="wo_x_btn", use_container_width=True): user_choice_wn = "X"
         
         if user_choice_wn:
             c_wn_ans = str(q_wn['정답']).strip().upper()

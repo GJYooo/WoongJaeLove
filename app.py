@@ -14,11 +14,12 @@ def get_audio_base64(file_path):
 
 def play_sound(file_path):
     b64_string = get_audio_base64(file_path)
+    # 재생 시마다 고유한 ID를 부여하여 브라우저 버퍼링을 방지합니다.
+    timestamp = time.time()
     md = f"""
-        <script>
-            var audio = new Audio("data:audio/mp3;base64,{b64_string}");
-            audio.play();
-        </script>
+        <audio autoplay="true" id="audio_{timestamp}">
+            <source src="data:audio/mp3;base64,{b64_string}" type="audio/mp3">
+        </audio>
         """
     st.markdown(md, unsafe_allow_html=True)
 

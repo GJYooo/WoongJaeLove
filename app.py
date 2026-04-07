@@ -380,31 +380,42 @@ with tab1:
                 with b_cols[2]: 
                     if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="q"): user_input = "?"
 
+
                 if user_input and not st.session_state.answered:
-                    solve_duration = time.time() - st.session_state.q_start_time
-                    st.session_state.total_solving_time += solve_duration
-                    st.session_state.q_start_time = None 
-                    
+                    # 1. 시간 및 상태 업데이트
+                    st.session_state.total_solving_time += (time.time() - st.session_state.q_start_time)
+                    st.session_state.q_start_time = None
                     st.session_state.answered = True
-                    correct_ans = str(q['정답']).strip().upper()
                     
-                    if user_input == "?":
+                    # 2. [가장 중요] 진짜 정답과 내가 누른 버튼 대조
+                    # 정답지(db_ans)와 내 버튼(my_ans)을 똑같이 대문자로 만들고 공백을 지웁니다.
+                    db_ans = str(q['정답']).strip().upper()
+                    my_ans = str(user_input).strip().upper()
+
+                    if my_ans == "?":
+                        # [케이스 1] 모름 버튼 -> 무조건 오답 소리
                         st.session_state.last_is_correct = False
+                        play_sound("wrong.mp3") 
                     else:
-                        is_correct = (user_input == correct_ans)
-                        st.session_state.last_is_correct = is_correct
-                        if is_correct:
-                            play_sound("correct.mp3") 
+                        # [케이스 2] O 또는 X 버튼을 눌렀을 때
+                        if my_ans == db_ans:
+                            # 정답을 맞힌 경우 (X가 답인데 X를 눌러도 여기로 옵니다!)
+                            st.session_state.last_is_correct = True
                             st.session_state.correct_count += 1
+                            play_sound("correct.mp3") # 무조건 정답 소리!!
                         else:
-                            play_sound("wrong.mp3") 
-                    
+                            # 틀린 경우
+                            st.session_state.last_is_correct = False
+                            play_sound("wrong.mp3") # 무조건 오답 소리!!
+
+                    # 3. 오답노트 자동 저장 (틀렸거나 모를 때만)
                     if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
-                            st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
+                            new_row = pd.DataFrame([q])
+                            st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, new_row], ignore_index=True)
                     
                     st.session_state.last_exp = q['해설']
-                    st.session_state.last_ans = correct_ans
+                    st.session_state.last_ans = db_ans
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:

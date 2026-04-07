@@ -165,8 +165,16 @@ if 'exam_list' not in st.session_state:
     st.session_state.exam_list = []
 if 'idx' not in st.session_state:
     st.session_state.idx = 0
-if 'answered' not in st.session_state:
-    st.session_state.answered = False
+if 'mid_answered' not in st.session_state:
+    st.session_state.mid_answered = False
+if 'mid_last_is_correct' not in st.session_state:
+    st.session_state.mid_last_is_correct = False
+if 'wn_answered' not in st.session_state:
+    st.session_state.wn_answered = False
+if 'wn_last_is_correct' not in st.session_state:
+    st.session_state.wn_last_is_correct = False
+
+
 if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'uploader_key' not in st.session_state:
@@ -347,7 +355,7 @@ with tab1:
         if st.button("🚀 새 시험 시작", key="mid_start", use_container_width=True):
             st.session_state.exam_list = db.sample(n=num).to_dict('records')
             st.session_state.idx = 0
-            st.session_state.answered = False
+            st.session_state.mid_answered = False
             st.session_state.correct_count = 0
             st.session_state.total_solving_time = 0.0  # 누적 풀이 시간 초기화
             st.session_state.q_start_time = time.time()  # 첫 번째 문제 시작 시간 기록
@@ -363,7 +371,7 @@ with tab1:
                 st.progress((curr_idx + 1) / len(exam))
                 
                 # 문제 출력 전, 만약 타이머가 안 돌아가고 있다면 (다음 문제로 넘어온 직후) 시작 시간 기록
-                if not st.session_state.answered and st.session_state.q_start_time is None:
+                if not st.session_state.mid_answered and st.session_state.q_start_time is None:
                     st.session_state.q_start_time = time.time()
 
                 raw_year_display = str(q.get('연도', '미분류')).split('.')[0]
@@ -380,35 +388,35 @@ with tab1:
                 with b_cols[2]: 
                     if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="q"): user_input = "?"
 
-                if user_input and not st.session_state.answered:
+                if user_input and not st.session_state.mid_answered:
                     solve_duration = time.time() - st.session_state.q_start_time
                     st.session_state.total_solving_time += solve_duration
                     st.session_state.q_start_time = None 
                     
-                    st.session_state.answered = True
+                    st.session_state.mid_answered = True
                     correct_ans = str(q['정답']).strip().upper()
                     
                     if user_input == "?":
-                        st.session_state.last_is_correct = False
+                        st.session_state.mid_last_is_correct = False
                         play_sound("wrong.mp3") 
                     else:
                         is_correct = (user_input == correct_ans)
-                        st.session_state.last_is_correct = is_correct
+                        st.session_state.mid_last_is_correct = is_correct
                         if is_correct:
                             play_sound("correct.mp3") 
                             st.session_state.correct_count += 1
                         else:
                             play_sound("wrong.mp3") 
                     
-                    if not st.session_state.last_is_correct:
+                    if not st.session_state.mid_last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                             st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
                     
                     st.session_state.last_exp = q['해설']
                     st.session_state.last_ans = correct_ans
 
-                if st.session_state.answered:
-                    if st.session_state.last_is_correct:
+                if st.session_state.mid_answered:
+                    if st.session_state.mid_last_is_correct:
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
@@ -428,7 +436,7 @@ with tab1:
                     
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
-                        if st.session_state.last_is_correct:
+                        if st.session_state.mid_last_is_correct:
                             if st.button("🤔 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True, shortcut="w"):
                                 if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                     st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
@@ -437,8 +445,7 @@ with tab1:
                         btn_label = "결과 확인하기 📊" if curr_idx == len(exam) - 1 else "다음 문제 ➡️"
                         if st.button(btn_label, key=f"next_{curr_idx}", use_container_width=True, shortcut="Enter"):
                             st.session_state.idx += 1
-                            st.session_state.answered = False
-                            # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
+                            st.session_state.mid_answered = False
                             st.rerun()
 
             # [B] 시험 결과 리포트

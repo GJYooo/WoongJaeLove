@@ -14,25 +14,26 @@ def get_audio_base64(file_path):
 
 
 def play_sound(file_path):
-    # 소리 설정이 꺼져 있으면 즉시 중단
     if not st.session_state.get('sound_on', True):
         return
         
     audio_base64 = get_audio_base64(file_path)
     if audio_base64:
-        uid = str(int(time.time() * 1000))
-        sound_html = """
-            <audio id="audio_{ID}" autoplay="true">
-                <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
-            </audio>
-            <script>
-                var s = document.getElementById("audio_{ID}");
-                s.volume = 0.4;
-                s.play();
-            </script>
-        """.replace("{ID}", uid).replace("{BASE64}", audio_base64)
-        st.components.v1.html(sound_html, height=0, width=0)
-
+        sound_slot = st.empty() 
+        
+        with sound_slot:
+            uid = str(int(time.time() * 1000))
+            sound_html = """
+                <audio id="audio_{ID}" autoplay="true">
+                    <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
+                </audio>
+                <script>
+                    var s = document.getElementById("audio_{ID}");
+                    s.volume = 0.4;
+                    s.play();
+                </script>
+            """.replace("{ID}", uid).replace("{BASE64}", audio_base64)
+            st.components.v1.html(sound_html, height=0, width=0)
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")

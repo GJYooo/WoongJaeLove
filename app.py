@@ -6,17 +6,21 @@ import time
 import json
 import base64
 
-# --- [효과음 재생 함수] ---
-def play_sound(file_path):
+@st.cache_data
+def get_audio_base64(file_path):
     with open(file_path, "rb") as f:
         data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio autoplay="true">
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        st.markdown(md, unsafe_allow_html=True)
+    return base64.b64encode(data).decode()
+
+def play_sound(file_path):
+    b64_string = get_audio_base64(file_path)
+    md = f"""
+        <script>
+            var audio = new Audio("data:audio/mp3;base64,{b64_string}");
+            audio.play();
+        </script>
+        """
+    st.markdown(md, unsafe_allow_html=True)
 
 
 # --- [팝업창 함수 정의] ---

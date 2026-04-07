@@ -355,7 +355,7 @@ with tab1:
                 with b_cols[1]: 
                     if st.button("X", key=f"x_{curr_idx}", use_container_width=True, shortcut="x"): user_input = "X"
                 with b_cols[2]: 
-                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="/"): user_input = "?"
+                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="q"): user_input = "?"
 
                 if user_input and not st.session_state.answered:
                     solve_duration = time.time() - st.session_state.q_start_time

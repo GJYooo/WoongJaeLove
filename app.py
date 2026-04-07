@@ -66,7 +66,32 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    
+    div[data-testid="stSidebarUserContent"] .stRadio > div {
+        gap: 10px;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio div[role="radiogroup"] > label {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 10px 20px;
+        border-radius: 10px;
+        width: 100%;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio div[role="radiogroup"] > label:hover {
+        border-color: #2e7d32;
+        background-color: #f1f8f1;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio div[role="radiogroup"] > label[data-baseweb="radio"] div:first-child {
+        display: none; /* 동그란 라디오 버튼 숨기기 */
+    }
+    /* 선택된 메뉴 강조 */
+    div[data-testid="stSidebarUserContent"] .stRadio div[role="radiogroup"] > label[data-selected="true"] {
+        background-color: #2e7d32 !important;
+        color: white !important;
+        font-weight: bold;
+        border-color: #1e5e24;
+    }
     
     .correct-feedback-text {
         background-color: #e6ffed; /* 연한 초록색 배경 */
@@ -193,17 +218,18 @@ if 'sound_trigger' not in st.session_state:
 
 # --- [사이드바] ---
 with st.sidebar:
+    
+    st.title("⚖️ 2026 형실연 중간고사 연습")
+    st.divider()
 
-    st.title("⚖️ 설정")
-
-    # [A] 페이지 메뉴 선택 (이게 단축키 충돌을 막는 핵심입니다!)
     st.subheader("📍 메뉴 이동")
     menu = st.radio(
         "이동할 페이지를 선택하세요",
         ["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"],
-        label_visibility="collapsed" # 제목 숨겨서 더 촘촘하게
+        label_visibility="collapsed",
+        key="main_menu_nav"
     )
-    
+
     st.divider()
 
     st.subheader("🔊 오디오 설정")
@@ -349,16 +375,9 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
-st.title("⚖️ 2026 형실연 중간고사 연습")
-
-tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
-
-# 현재 로드된 데이터 참조
 db = st.session_state.db
-
+st.title(menu)
 if menu == "📝 중간고사 연습":
-    st.title("📝 중간고사 연습")
-# --- Tab 1: 중간고사 연습 ---
     if db.empty:
         st.info("사이드바에서 데이터를 불러오세요.")
     else:
@@ -488,7 +507,6 @@ if menu == "📝 중간고사 연습":
                     st.rerun()
 
 elif menu == "❌ 오답 집중 복습":
-    st.title("❌ 오답 집중 복습")
     wn = st.session_state.wrong_notes
     if wn.empty:
         st.info("오답 노트가 비어 있습니다.")
@@ -577,7 +595,6 @@ elif menu == "❌ 오답 집중 복습":
 
 
 elif menu == "📚 전체 조회":
-    st.title("📚 전체 조회")
     st.dataframe(db, use_container_width=True)
 
 if st.session_state.get('sound_trigger'):

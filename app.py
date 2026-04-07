@@ -5,6 +5,7 @@ import os
 import time
 import json
 import base64
+import streamlit.components.v1 as components
 
 @st.cache_data
 def get_audio_base64(file_path):
@@ -562,18 +563,18 @@ with tab3:
     st.dataframe(db, use_container_width=True)
 
 if st.session_state.get('sound_trigger'):
-    audio_to_play = st.session_state.sound_trigger
-    audio_base64 = get_audio_base64(audio_to_play)
+    sound_to_play = st.session_state.sound_trigger
+    st.session_state.sound_trigger = None 
     
-    if audio_base64:
-        playback_key = f"play_{int(time.time() * 1000)}"
-        st.session_state.sound_trigger = None
-        
-        # 소리 재생 전용 Iframe 생성
-        st.components.v1.html(f"""
+    audio_data = get_audio_base64(sound_to_play)
+    if audio_data:
+        js_template = """
             <script>
-                var audio = new Audio("data:audio/mp3;base64,{audio_base64}");
+                var audio = new Audio("data:audio/mp3;base64,{B64_DATA}");
                 audio.volume = 0.4;
                 audio.play();
             </script>
-        """, height=0, width=0, key=playback_key)
+        """
+        js_code = js_template.replace("{B64_DATA}", audio_data)
+        
+        components.html(js_code, height=0, width=0)

@@ -446,23 +446,35 @@ with tab2:
     if wn.empty:
         st.info("오답 노트가 비어 있습니다.")
     else:
-        # 오답 개수에 따라 인덱스가 범위를 벗어나지 않도록 조정
+        # --- [셔플 버튼 추가 구역] ---
+        col_shuffle1, col_shuffle2 = st.columns([3, 1])
+        with col_shuffle1:
+            st.subheader(f"관리 중인 오답: {len(wn)}개")
+        with col_shuffle2:
+            # 버튼을 누르면 데이터프레임을 무작위로 샘플링하여 다시 저장
+            if st.button("🔀 오답 섞기", use_container_width=True, key="shuffle_wn"):
+                st.session_state.wrong_notes = wn.sample(frac=1).reset_index(drop=True)
+                st.session_state.wn_idx = 0 # 순서가 바뀌었으므로 첫 번째 문제부터 시작
+                st.toast("오답 순서가 무작위로 섞였습니다! 🎲")
+                time.sleep(0.5)
+                st.rerun()
+        st.divider()
+
+        # (이후 기존 네비게이션 및 문제 출력 로직...)
         if st.session_state.wn_idx >= len(wn):
             st.session_state.wn_idx = 0
 
         # 상단 네비게이션 바
-        col_nav1, col_nav2, col_nav3 = st.columns([1, 2, 1])
-        with col_nav1:
+        n1, n2, n3 = st.columns([1, 2, 1])
+        with n1:
             if st.button("⬅️ 이전 오답", use_container_width=True, key="wn_prev"):
-                st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn)
-                st.rerun()
-        with col_nav2:
+                st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn); st.rerun()
+        with n2:
             st.markdown(f"<p style='text-align: center; font-weight: bold;'>오답 {st.session_state.wn_idx + 1} / {len(wn)}</p>", unsafe_allow_html=True)
-        with col_nav3:
+        with n3:
             if st.button("다음 오답 ➡️", use_container_width=True, key="wn_next_nav"):
-                st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn)
-                st.rerun()
-
+                st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn); st.rerun()
+        
         # 현재 인덱스의 오답 가져오기
         q_wn = wn.iloc[st.session_state.wn_idx]
         raw_year_wn_display = str(q_wn.get('연도', '미분류')).split('.')[0]

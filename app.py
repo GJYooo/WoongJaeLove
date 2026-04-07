@@ -39,80 +39,79 @@ GID_MAP = {
     2026: "0"
 }
 
-# CSS: 사이드바 메뉴 가시성 개선 및 버튼 디자인
+# --- [디자인 및 레이아웃 최적화 설정] ---
 st.markdown("""
     <style>
-    /* 1. 문제 박스: 검은 글씨 강제 고정 */
+    /* 1. 문제 박스: 가독성 중심 */
     .question-box {
-        background-color: #f1f3f5;
-        color: #000000 !important;
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 8px solid #2e7d32;
-        margin-bottom: 10px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        line-height: 1.5;
+        background-color: #f1f3f5; color: #000000 !important;
+        padding: 15px; border-radius: 10px; border-left: 6px solid #2e7d32;
+        margin-bottom: 5px; font-size: 1.1rem; line-height: 1.5;
     }
     
-    /* 2. 일반 버튼 디자인 (흰색 글씨) */
+    /* 2. 메인 버튼: 다크 테마 */
     .stButton>button {
-        width: 100% !important;
-        height: 3em;
-        font-size: 16px !important;
-        font-weight: bold !important;
-        color: #ffffff !important;
-        background-color: #262730;
-        border-radius: 8px;
+        width: 100% !important; height: 3em; font-size: 16px !important;
+        font-weight: bold !important; color: #ffffff !important;
+        background-color: #262730; border-radius: 8px; margin-bottom: 5px;
     }
 
-    /* 3. 사이드바 내비게이션 카드 디자인 */
-    /* 라디오 버튼 전체 컨테이너 */
+    /* 3. 사이드바 전체 간격 초밀착 조절 */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.2rem !important; /* 요소들 사이 간격 최소화 */
+        padding-top: 1rem !important;
+    }
+    
+    /* 구분선(hr) 위아래 여백 제거 */
+    [data-testid="stSidebar"] hr {
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+
+    /* 4. 사이드바 메뉴 디자인 (플랫 버튼 스타일) */
     div[role="radiogroup"] {
-        gap: 10px;
+        gap: 5px !important; /* 메뉴 사이 간격 좁게 */
     }
 
-    /* 각 메뉴 항목 라벨 */
     div[role="radiogroup"] > label {
-        background-color: #ffffff !important; /* 배경 흰색 고정 */
-        border: 1px solid #d1d5db !important;
-        padding: 12px 15px !important;
-        border-radius: 10px !important;
-        width: 100% !important;
-        transition: all 0.2s;
-        cursor: pointer;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        margin-bottom: 2px !important;
+        background-color: transparent !important; /* 평소엔 투명 */
+        border: none !important; /* 테두리 제거 */
+        transition: 0.2s;
     }
 
-    /* 메뉴 항목 안의 글자색 (중요: 검은색 고정) */
-    div[role="radiogroup"] > label div[data-testid="stMarkdownContainer"] p {
-        color: #1f2937 !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
+    /* 메뉴 글자색 조절 */
+    div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
+        color: #555555 !important; /* 평소엔 부드러운 회색 */
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
     }
 
     /* 마우스 올렸을 때 */
     div[role="radiogroup"] > label:hover {
-        border-color: #2e7d32 !important;
-        background-color: #f9fafb !important;
+        background-color: #f0f2f6 !important;
     }
 
-    /* 선택된 메뉴 강조 스타일 */
+    /* 선택된 메뉴 강조 (진한 초록색 바 스타일) */
     div[role="radiogroup"] > label[data-selected="true"] {
-        background-color: #2e7d32 !important; /* 진한 초록색 배경 */
-        border-color: #1e5e24 !important;
+        background-color: #e8f5e9 !important; /* 아주 연한 초록 배경 */
+        border-left: 5px solid #2e7d32 !important; /* 왼쪽에 강조 선 */
     }
 
-    /* 선택된 메뉴 안의 글자색 (흰색으로 반전) */
     div[role="radiogroup"] > label[data-selected="true"] div[data-testid="stMarkdownContainer"] p {
-        color: #ffffff !important;
+        color: #2e7d32 !important; /* 선택된 글자만 진한 초록색 */
+        font-weight: 700 !important;
     }
 
-    /* 동그란 라디오 버튼 자체는 숨김 */
+    /* 라디오 버튼 동그라미 숨기기 */
     div[role="radiogroup"] [data-baseweb="radio"] > div:first-child {
         display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 # --- [데이터 로드 및 업데이트 로직] ---
 
@@ -208,18 +207,11 @@ if 'sound_trigger' not in st.session_state:
 
 # --- [사이드바] ---
 with st.sidebar:
-    
-    st.title("⚖️ 2026 형실연 중간고사 연습")
+    st.markdown("### ⚖️ 형사법 기출 마스터") # h3 정도로 적절하게
     st.divider()
-
-    st.subheader("📍 메뉴 이동")
-    menu = st.radio(
-        "이동할 페이지를 선택하세요",
-        ["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"],
-        label_visibility="collapsed",
-        key="main_menu_nav"
-    )
-
+    
+    # 메뉴 선택
+    menu = st.radio("메뉴", ["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"], label_visibility="collapsed", key="nav")
     st.divider()
 
     st.subheader("🔊 오디오 설정")

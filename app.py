@@ -12,28 +12,12 @@ def get_audio_base64(file_path):
         data = f.read()
     return base64.b64encode(data).decode()
 
-
 def play_sound(file_path):
     if not st.session_state.get('sound_on', True):
         return
-        
-    audio_base64 = get_audio_base64(file_path)
-    if audio_base64:
-        sound_slot = st.empty() 
-        
-        with sound_slot:
-            uid = str(int(time.time() * 1000))
-            sound_html = """
-                <audio id="audio_{ID}" autoplay="true">
-                    <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
-                </audio>
-                <script>
-                    var s = document.getElementById("audio_{ID}");
-                    s.volume = 0.4;
-                    s.play();
-                </script>
-            """.replace("{ID}", uid).replace("{BASE64}", audio_base64)
-            st.components.v1.html(sound_html, height=0, width=0)
+    # 소리를 재생하라는 '신호'만 딱 남깁니다.
+    st.session_state.sound_trigger = file_path
+
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
@@ -194,6 +178,8 @@ if 'correct_count' not in st.session_state:
     st.session_state.correct_count = 0
 if 'sound_on' not in st.session_state:
     st.session_state.sound_on = True  # 기본값은 '켜짐'
+if 'sound_trigger' not in st.session_state:
+    st.session_state.sound_trigger = None
 
 
 # --- [사이드바] ---
@@ -403,17 +389,14 @@ with tab1:
                     
                     if user_input == "?":
                         st.session_state.last_is_correct = False
-                        st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                         play_sound("wrong.mp3") 
                     else:
                         is_correct = (user_input == correct_ans)
                         st.session_state.last_is_correct = is_correct
                         if is_correct:
-                            st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                             play_sound("correct.mp3") 
                             st.session_state.correct_count += 1
                         else:
-                            st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                             play_sound("wrong.mp3") 
                     
                     if not st.session_state.last_is_correct:
@@ -577,3 +560,20 @@ with tab2:
 with tab3:
     st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
+
+if st.session_state.get('sound_trigger'):
+    audio_to_play = st.session_state.sound_trigger
+    audio_base64 = get_audio_base64(audio_to_play)
+    
+    if audio_base64:
+        playback_key = f"play_{int(time.time() * 1000)}"
+        st.session_state.sound_trigger = None
+        
+        # 소리 재생 전용 Iframe 생성
+        st.components.v1.html(f"""
+            <script>
+                var audio = new Audio("data:audio/mp3;base64,{audio_base64}");
+                audio.volume = 0.4;
+                audio.play();
+            </script>
+        """, height=0, width=0, key=playback_key)

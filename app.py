@@ -4,20 +4,6 @@ import random
 import os
 import time
 import json
-import base64
-import streamlit.components.v1 as components
-
-@st.cache_data
-def get_audio_base64(file_path):
-    with open(file_path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-def play_sound(file_path):
-    if not st.session_state.get('sound_on', True):
-        return
-    # 소리를 재생하라는 '신호'만 딱 남깁니다.
-    st.session_state.sound_trigger = file_path
 
 
 # --- [팝업창 함수 정의] ---
@@ -39,74 +25,65 @@ GID_MAP = {
     2026: "0"
 }
 
-# --- [모든 디자인 요소 통합 설정] ---
+# CSS: 가독성 및 디자인
 st.markdown("""
     <style>
-    /* 1. 문제 박스: 가독성 중심 */
+    /* 문제 박스 디자인 */
     .question-box {
-        background-color: #f1f3f5; color: #000000 !important;
-        padding: 15px; border-radius: 10px; border-left: 6px solid #2e7d32;
-        margin-bottom: 5px; font-size: 1.1rem; line-height: 1.5;
+        background-color: #f1f3f5;
+        color: #000000 !important;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 8px solid #2e7d32;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        line-height: 1.5;
     }
     
-    /* 2. 메인 버튼: 다크 테마 및 너비 꽉 채움 */
+    /* 버튼 디자인 */
     .stButton>button {
-        width: 100% !important; height: 3em; font-size: 16px !important;
-        font-weight: bold !important; color: #ffffff !important;
-        background-color: #262730; border-radius: 8px; margin-bottom: 5px;
+        width: 100% !important; 
+        height: 3em;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        color: #ffffff !important;
+        background-color: #262730;
+        border-radius: 8px;
     }
 
-    /* 3. 정답/오답 피드백 텍스트 스타일 (복구 완료!) */
+    
+    
     .correct-feedback-text {
-        background-color: #e6ffed !important; /* 연한 초록색 배경 */
-        color: #1a7f37 !important; /* 진한 초록색 글씨 */
-        padding: 8px 15px !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
-        display: inline-block;
-        margin-bottom: 10px;
+        background-color: #e6ffed; /* 연한 초록색 배경 */
+        color: #1a7f37; /* 진한 초록색 글씨 */
+        padding: 5px 10px; /* 내부 여백 */
+        border-radius: 5px; /* 모서리 둥글게 */
+        font-weight: bold; /* 글씨 굵게 */
     }
     .wrong-feedback-text {
-        background-color: #ffebe8 !important; /* 연한 빨간색 배경 */
-        color: #b02a37 !important; /* 진한 빨간색 글씨 */
-        padding: 8px 15px !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
-        display: inline-block;
-        margin-bottom: 10px;
+        background-color: #ffebe8; /* 연한 빨간색 배경 */
+        color: #b02a37; /* 진한 빨간색 글씨 */
+        padding: 5px 15px;
+        border-radius: 5px;
+        font-weight: bold;
     }
 
-    /* 4. 사이드바 전체 간격 초밀착 조절 */
+    div[data-testid="stHorizontalBlock"] {
+        align-items: center !important
+    }
+
+    
+    /* 사이드바 내부 간격 촘촘하게 조절 */
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
-        gap: 0.2rem !important;
-        padding-top: 1rem !important;
+        gap: 0.3rem !important; 
     }
     [data-testid="stSidebar"] hr {
-        margin-top: 0.3rem !important;
-        margin-bottom: 0.3rem !important;
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
     }
-
-    /* 5. 사이드바 메뉴 디자인 (슬림 리스트 스타일) */
-    div[role="radiogroup"] { gap: 5px !important; }
-    div[role="radiogroup"] > label {
-        padding: 8px 12px !important; border-radius: 8px !important;
-        margin-bottom: 2px !important; background-color: transparent !important;
-        border: none !important; transition: 0.2s;
-    }
-    div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] p {
-        color: #555555 !important; font-weight: 500 !important; font-size: 0.95rem !important;
-    }
-    div[role="radiogroup"] > label:hover { background-color: #f0f2f6 !important; }
-    div[role="radiogroup"] > label[data-selected="true"] {
-        background-color: #e8f5e9 !important; border-left: 5px solid #2e7d32 !important;
-    }
-    div[role="radiogroup"] > label[data-selected="true"] div[data-testid="stMarkdownContainer"] p {
-        color: #2e7d32 !important; font-weight: 700 !important;
-    }
-    div[role="radiogroup"] [data-baseweb="radio"] > div:first-child { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
-
 
 # --- [데이터 로드 및 업데이트 로직] ---
 
@@ -174,45 +151,23 @@ if 'exam_list' not in st.session_state:
     st.session_state.exam_list = []
 if 'idx' not in st.session_state:
     st.session_state.idx = 0
-if 'mid_answered' not in st.session_state:
-    st.session_state.mid_answered = False
-if 'mid_last_is_correct' not in st.session_state:
-    st.session_state.mid_last_is_correct = False
-if 'wn_answered' not in st.session_state:
-    st.session_state.wn_answered = False
-if 'wn_last_is_correct' not in st.session_state:
-    st.session_state.wn_last_is_correct = False
-
-
+if 'answered' not in st.session_state:
+    st.session_state.answered = False
 if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0 # 업로더 초기화용 키
-if 'total_solving_time' not in st.session_state:
-    st.session_state.total_solving_time = 0.0
-if 'q_start_time' not in st.session_state:
-    st.session_state.q_start_time = None
-if 'correct_count' not in st.session_state:
-    st.session_state.correct_count = 0
-if 'sound_on' not in st.session_state:
-    st.session_state.sound_on = True  # 기본값은 '켜짐'
-if 'sound_trigger' not in st.session_state:
-    st.session_state.sound_trigger = None
+if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
+if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
+if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
+
 
 
 # --- [사이드바] ---
 with st.sidebar:
-    st.markdown("### ⚖️ 형사법 기출 마스터") # h3 정도로 적절하게
-    st.divider()
+    st.title("⚖️ 설정")
+
     
-    # 메뉴 선택
-    menu = st.radio("메뉴", ["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"], label_visibility="collapsed", key="nav")
-    st.divider()
-
-    st.subheader("🔊 오디오 설정")
-    st.toggle("🔊 효과음 활성화", key="sound_on")
-    st.divider()
-
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()
@@ -352,9 +307,15 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- [메인 화면] ---
+st.title("⚖️ 2026 형실연 중간고사 연습")
+
+tab1, tab2, tab3 = st.tabs(["📝 중간고사 연습", "❌ 오답 집중 복습", "📚 전체 조회"])
+
+# 현재 로드된 데이터 참조
 db = st.session_state.db
-st.title(menu)
-if menu == "📝 중간고사 연습":
+
+# --- Tab 1: 중간고사 연습 ---
+with tab1:
     if db.empty:
         st.info("사이드바에서 데이터를 불러오세요.")
     else:
@@ -363,7 +324,7 @@ if menu == "📝 중간고사 연습":
         if st.button("🚀 새 시험 시작", key="mid_start", use_container_width=True):
             st.session_state.exam_list = db.sample(n=num).to_dict('records')
             st.session_state.idx = 0
-            st.session_state.mid_answered = False
+            st.session_state.answered = False
             st.session_state.correct_count = 0
             st.session_state.total_solving_time = 0.0  # 누적 풀이 시간 초기화
             st.session_state.q_start_time = time.time()  # 첫 번째 문제 시작 시간 기록
@@ -379,7 +340,7 @@ if menu == "📝 중간고사 연습":
                 st.progress((curr_idx + 1) / len(exam))
                 
                 # 문제 출력 전, 만약 타이머가 안 돌아가고 있다면 (다음 문제로 넘어온 직후) 시작 시간 기록
-                if not st.session_state.mid_answered and st.session_state.q_start_time is None:
+                if not st.session_state.answered and st.session_state.q_start_time is None:
                     st.session_state.q_start_time = time.time()
 
                 raw_year_display = str(q.get('연도', '미분류')).split('.')[0]
@@ -396,35 +357,31 @@ if menu == "📝 중간고사 연습":
                 with b_cols[2]: 
                     if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="q"): user_input = "?"
 
-                if user_input and not st.session_state.mid_answered:
+                if user_input and not st.session_state.answered:
                     solve_duration = time.time() - st.session_state.q_start_time
                     st.session_state.total_solving_time += solve_duration
                     st.session_state.q_start_time = None 
                     
-                    st.session_state.mid_answered = True
+                    st.session_state.answered = True
                     correct_ans = str(q['정답']).strip().upper()
                     
                     if user_input == "?":
-                        st.session_state.mid_last_is_correct = False
-                        play_sound("wrong.mp3") 
+                        st.session_state.last_is_correct = False
                     else:
                         is_correct = (user_input == correct_ans)
-                        st.session_state.mid_last_is_correct = is_correct
+                        st.session_state.last_is_correct = is_correct
                         if is_correct:
-                            play_sound("correct.mp3") 
                             st.session_state.correct_count += 1
-                        else:
-                            play_sound("wrong.mp3") 
                     
-                    if not st.session_state.mid_last_is_correct:
+                    if not st.session_state.last_is_correct:
                         if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                             st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
                     
                     st.session_state.last_exp = q['해설']
                     st.session_state.last_ans = correct_ans
 
-                if st.session_state.mid_answered:
-                    if st.session_state.mid_last_is_correct:
+                if st.session_state.answered:
+                    if st.session_state.last_is_correct:
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
@@ -444,7 +401,7 @@ if menu == "📝 중간고사 연습":
                     
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
-                        if st.session_state.mid_last_is_correct:
+                        if st.session_state.last_is_correct:
                             if st.button("🤔 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True, shortcut="w"):
                                 if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                     st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
@@ -453,7 +410,8 @@ if menu == "📝 중간고사 연습":
                         btn_label = "결과 확인하기 📊" if curr_idx == len(exam) - 1 else "다음 문제 ➡️"
                         if st.button(btn_label, key=f"next_{curr_idx}", use_container_width=True, shortcut="Enter"):
                             st.session_state.idx += 1
-                            st.session_state.mid_answered = False
+                            st.session_state.answered = False
+                            # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
                             st.rerun()
 
             # [B] 시험 결과 리포트
@@ -483,7 +441,8 @@ if menu == "📝 중간고사 연습":
                     st.session_state.total_solving_time = 0.0
                     st.rerun()
 
-elif menu == "❌ 오답 집중 복습":
+# --- Tab 2: 오답 집중 복습 (네비게이션 기능 추가) ---
+with tab2:
     wn = st.session_state.wrong_notes
     if wn.empty:
         st.info("오답 노트가 비어 있습니다.")
@@ -537,14 +496,12 @@ elif menu == "❌ 오답 집중 복습":
             feedback_wn_message = ""
             
             if user_choice_wn == c_wn_ans: # 정답인 경우
-                play_sound("correct.mp3")
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:
                     st.image("correct.jpeg", width=50) 
                 with col_feedback_text:
                     st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
             else: # 오답인 경우
-                play_sound("wrong.mp3")
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:
                     st.image("wrong.jpeg", width=50)
@@ -571,22 +528,7 @@ elif menu == "❌ 오답 집중 복습":
         st.caption("이 문제를 완전히 이해하고 기억했다면 위 버튼을 눌러 오답노트에서 제거할 수 있습니다.")
 
 
-elif menu == "📚 전체 조회":
+# --- Tab 3: 전체 조회 ---
+with tab3:
+    st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
-
-if st.session_state.get('sound_trigger'):
-    sound_to_play = st.session_state.sound_trigger
-    st.session_state.sound_trigger = None 
-    
-    audio_data = get_audio_base64(sound_to_play)
-    if audio_data:
-        js_template = """
-            <script>
-                var audio = new Audio("data:audio/mp3;base64,{B64_DATA}");
-                audio.volume = 0.4;
-                audio.play();
-            </script>
-        """
-        js_code = js_template.replace("{B64_DATA}", audio_data)
-        
-        components.html(js_code, height=0, width=0)

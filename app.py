@@ -390,7 +390,6 @@ with tab1:
                     
                     if user_input == "?":
                         st.session_state.last_is_correct = False
-                        play_sound("wrong.mp3") 
                     else:
                         is_correct = (user_input == correct_ans)
                         st.session_state.last_is_correct = is_correct

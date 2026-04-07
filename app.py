@@ -514,7 +514,7 @@ with tab2:
                 st.write(q_wn['해설'])
 
         st.markdown("---")
-        if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent", shortcut="w"): # 버튼 key 변경
+        if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent", shortcut="d"): # 버튼 key 변경
             st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
             st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
             

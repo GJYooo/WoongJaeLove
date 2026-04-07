@@ -13,6 +13,8 @@ def get_audio_base64(file_path):
     return base64.b64encode(data).decode()
 
 def play_sound(file_path):
+    if not st.session_state.sound_on:
+        return
     b64_string = get_audio_base64(file_path)
     # 재생 시마다 고유한 ID를 부여하여 브라우저 버퍼링을 방지합니다.
     timestamp = time.time()
@@ -175,17 +177,24 @@ if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0 # 업로더 초기화용 키
-if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
-if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
-if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
-
+if 'total_solving_time' not in st.session_state:
+    st.session_state.total_solving_time = 0.0
+if 'q_start_time' not in st.session_state:
+    st.session_state.q_start_time = None
+if 'correct_count' not in st.session_state:
+    st.session_state.correct_count = 0
+if 'sound_on' not in st.session_state:
+    st.session_state.sound_on = True  # 기본값은 '켜짐'
 
 
 # --- [사이드바] ---
 with st.sidebar:
     st.title("⚖️ 설정")
 
-    
+    st.subheader("🔊 오디오 설정")
+    st.session_state.sound_on = st.toggle("효과음 켜기", value=st.session_state.sound_on)
+    st.divider()
+
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
     st.divider()

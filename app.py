@@ -402,14 +402,17 @@ with tab1:
                     
                     if user_input == "?":
                         st.session_state.last_is_correct = False
+                        st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                         play_sound("wrong.mp3") 
                     else:
                         is_correct = (user_input == correct_ans)
                         st.session_state.last_is_correct = is_correct
                         if is_correct:
+                            st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                             play_sound("correct.mp3") 
                             st.session_state.correct_count += 1
                         else:
+                            st.write(f"내 입력: [{user_input}] / 실제 정답: [{q['정답']}]")
                             play_sound("wrong.mp3") 
                     
                     if not st.session_state.last_is_correct:

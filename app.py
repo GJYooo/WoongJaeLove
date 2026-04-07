@@ -43,6 +43,7 @@ st.markdown("""
     
     /* 버튼 디자인 */
     .stButton>button {
+        width: 100% !important; 
         height: 3em;
         font-size: 16px !important;
         font-weight: bold !important;

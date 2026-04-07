@@ -351,11 +351,11 @@ with tab1:
                 user_input = None
                 b_cols = st.columns(3)
                 with b_cols[0]: 
-                    if st.button("O", key=f"o_{curr_idx}", use_container_width=True): user_input = "O"
+                    if st.button("O", key=f"o_{curr_idx}", use_container_width=True, shortcut="o"): user_input = "O"
                 with b_cols[1]: 
-                    if st.button("X", key=f"x_{curr_idx}", use_container_width=True): user_input = "X"
+                    if st.button("X", key=f"x_{curr_idx}", use_container_width=True, shortcut="x"): user_input = "X"
                 with b_cols[2]: 
-                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True): user_input = "?"
+                    if st.button("?", key=f"q_{curr_idx}", use_container_width=True, shortcut="/"): user_input = "?"
 
                 if user_input and not st.session_state.answered:
                     solve_duration = time.time() - st.session_state.q_start_time
@@ -402,13 +402,13 @@ with tab1:
                     c_n1, c_n2 = st.columns(2)
                     with c_n1:
                         if st.session_state.last_is_correct:
-                            if st.button("🤔 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True):
+                            if st.button("🤔 오답노트 추가", key=f"manual_{curr_idx}", use_container_width=True, shortcut="w"):
                                 if q['문제'] not in st.session_state.wrong_notes['문제'].values:
                                     st.session_state.wrong_notes = pd.concat([st.session_state.wrong_notes, pd.DataFrame([q])], ignore_index=True)
                                     st.toast("오답노트 수동 추가 완료!")
                     with c_n2:
                         btn_label = "결과 확인하기 📊" if curr_idx == len(exam) - 1 else "다음 문제 ➡️"
-                        if st.button(btn_label, key=f"next_{curr_idx}", use_container_width=True):
+                        if st.button(btn_label, key=f"next_{curr_idx}", use_container_width=True, shortcut="Enter"):
                             st.session_state.idx += 1
                             st.session_state.answered = False
                             # 다음 문제를 위해 타이머는 위쪽 'if not answered' 구역에서 재시작됨
@@ -468,12 +468,12 @@ with tab2:
         # 상단 네비게이션 바
         n1, n2, n3 = st.columns([1, 2, 1])
         with n1:
-            if st.button("⬅️ 이전 오답", use_container_width=True, key="wn_prev"):
+            if st.button("⬅️ 이전 오답", use_container_width=True, key="wn_prev", shortcut="ArrowLeft"):
                 st.session_state.wn_idx = (st.session_state.wn_idx - 1) % len(wn); st.rerun()
         with n2:
             st.markdown(f"<p style='text-align: center; font-weight: bold;'>오답 {st.session_state.wn_idx + 1} / {len(wn)}</p>", unsafe_allow_html=True)
         with n3:
-            if st.button("다음 오답 ➡️", use_container_width=True, key="wn_next_nav"):
+            if st.button("다음 오답 ➡️", use_container_width=True, key="wn_next_nav", shortcut="ArrowRight"):
                 st.session_state.wn_idx = (st.session_state.wn_idx + 1) % len(wn); st.rerun()
         
         # 현재 인덱스의 오답 가져오기
@@ -487,9 +487,9 @@ with tab2:
         cw1, cw2 = st.columns(2)
         user_choice_wn = None
         with cw1:
-            if st.button("O", key="wo_o_btn", use_container_width=True): user_choice_wn = "O"
+            if st.button("O", key="wo_o_btn", use_container_width=True, shortcut="o"): user_choice_wn = "O"
         with cw2:
-            if st.button("X", key="wo_x_btn", use_container_width=True): user_choice_wn = "X"
+            if st.button("X", key="wo_x_btn", use_container_width=True, shortcut="x"): user_choice_wn = "X"
         
         if user_choice_wn:
             c_wn_ans = str(q_wn['정답']).strip().upper()
@@ -514,7 +514,7 @@ with tab2:
                 st.write(q_wn['해설'])
 
         st.markdown("---")
-        if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent"): # 버튼 key 변경
+        if st.button("✅ 오답노트에서 이 문제 제거", use_container_width=True, key="remove_from_wn_manual_permanent", shortcut="Enter"): # 버튼 key 변경
             st.session_state.wrong_notes = wn.drop(wn.index[st.session_state.wn_idx]).reset_index(drop=True)
             st.toast("선택한 문제가 오답 노트에서 제거되었습니다.")
             

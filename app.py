@@ -179,8 +179,6 @@ if 'sound_on' not in st.session_state:
 # --- [사이드바] ---
 with st.sidebar:
     st.title("⚖️ 설정")
-    st.divider()
-
     st.toggle("🔊 효과음 활성화", key="sound_on")
     
     if st.button("📖 사용방법 보기", use_container_width=True):

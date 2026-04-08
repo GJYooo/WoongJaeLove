@@ -567,31 +567,20 @@ with tab3:
     st.dataframe(db, use_container_width=True)
 
 if st.session_state.get('audio_trigger'):
-    # 1. 신호를 가져오고 즉시 비웁니다 (중복 재생 방지 핵심)
+    # 1. 예약된 파일명을 가져옵니다.
     sound_to_play = st.session_state.audio_trigger
+    # 2. 신호를 즉시 삭제 (중복 방지)
     st.session_state.audio_trigger = None 
     
-    # 2. 오디오 데이터를 베이스64로 가져옵니다
+    # 3. 위에서 정의한 get_audio_base64 함수를 사용하여 데이터를 가져옵니다.
     audio_b64 = get_audio_base64(sound_to_play)
     
     if audio_b64:
-        # 3. 브라우저가 "공식 오디오"로 인식하게 만드는 자바스크립트
-        # f-string 충돌 방지를 위해 .replace() 방식을 사용합니다.
-        js_template = """
-            <script>
-                var audio = new Audio("data:audio/mp3;base64,{B64}");
-                audio.volume = 0.5;
-                // 모바일에서 재생을 강제하는 프로미스 처리
-                var playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("모바일은 첫 터치가 필요합니다.");
-                    });
-                }
-            </script>
+        # 4. HTML5 오디오 주입 (PC/모바일 공용 방식)
+        unique_id = f"audio_{int(time.time() * 1000)}"
+        audio_html = f"""
+            <audio autoplay class="hidden-audio" id="{unique_id}">
+                <source src="data:audio/mp3;base64,{audio_b64}" type="audio/mp3">
+            </audio>
         """
-        js_final = js_template.replace("{B64}", audio_b64)
-        
-        # 4. 컴포넌트를 통해 주입 (height=0으로 두어 버튼을 밀어내지 않음)
-        components.html(js_final, height=0, width=0)
-
+        st.markdown(audio_html, unsafe_allow_html=True)

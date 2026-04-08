@@ -12,6 +12,16 @@ def show_manual():
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
+@st.cache_data
+def get_audio_base64(file_path):
+    """파일을 읽어서 메모리에 보관하는 함수 (삭제 시 NameError 발생)"""
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception as e:
+        return None
+
 def play_sound(file_path):
     # 소리 설정이 꺼져 있으면 신호를 보내지 않음
     if not st.session_state.get('sound_on', True):

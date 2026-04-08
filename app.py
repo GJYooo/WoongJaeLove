@@ -23,28 +23,11 @@ def get_audio_base64(file_path):
         return None
 
 def play_sound(file_path):
-    """화면에 소리를 재생하는 함수"""
-    # 1. 소리 설정 확인
+    # 소리 설정이 꺼져 있으면 신호를 보내지 않음
     if not st.session_state.get('sound_on', True):
         return
-        
-    # 2. 위에서 정의한 get_audio_base64 함수를 호출함
-    audio_base64 = get_audio_base64(file_path)
-    
-    if audio_base64:
-        uid = str(int(time.time() * 1000))
-        js_template = """
-            <audio id="audio_{ID}" autoplay="true">
-                <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
-            </audio>
-            <script>
-                var s = document.getElementById("audio_{ID}");
-                s.volume = 0.4;
-                s.play();
-            </script>
-        """
-        sound_html = js_template.replace("{ID}", uid).replace("{BASE64}", audio_base64)
-        st.components.v1.html(sound_html, height=0, width=0)
+    # 재생할 파일명만 주머니에 넣어둡니다.
+    st.session_state.audio_trigger = file_path
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
@@ -578,3 +561,26 @@ with tab2:
 with tab3:
     st.header("📚 전체 문제 조회")
     st.dataframe(db, use_container_width=True)
+
+
+if st.session_state.get('audio_trigger'):
+    # 1. 신호를 가져오고 즉시 비웁니다 (중복 재생 방지 핵심!)
+    sound_to_play = st.session_state.audio_trigger
+    st.session_state.audio_trigger = None 
+    
+    # 2. 오디오 데이터를 베이스64로 변환
+    audio_data = get_audio_base64(sound_to_play)
+    
+    if audio_data:
+        # 3. f-string 에러를 방지하기 위해 replace 방식을 사용합니다.
+        js_template = """
+            <script>
+                var audio = new Audio("data:audio/mp3;base64,{B64}");
+                audio.volume = 0.4;
+                audio.play().catch(e => console.log("상호작용 필요"));
+            </script>
+        """
+        js_final = js_template.replace("{B64}", audio_data)
+        
+        # 4. 브라우저에 소리 명령 주입
+        components.html(js_final, height=0, width=0)

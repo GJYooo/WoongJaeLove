@@ -4,13 +4,34 @@ import random
 import os
 import time
 import json
-
+import streamlit.components.v1 as components
 
 # --- [팝업창 함수 정의] ---
 @st.dialog("📖 사용방법 가이드", width="large")
 def show_manual():
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
+
+def play_sound(file_path):
+    # 소리 설정 확인
+    if not st.session_state.get('sound_on', True):
+        return
+        
+    audio_base64 = get_audio_base64(file_path)
+    if audio_base64:
+        unique_id = str(int(time.time() * 1000))
+        js_template = """
+            <audio id="audio_{ID}" autoplay="true">
+                <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
+            </audio>
+            <script>
+                var s = document.getElementById("audio_{ID}");
+                s.volume = 0.4;
+                s.play();
+            </script>
+        """
+        sound_html = js_template.replace("{ID}", unique_id).replace("{BASE64}", audio_base64)
+        st.components.v1.html(sound_html, height=0, width=0)
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
@@ -157,16 +178,22 @@ if 'wn_idx' not in st.session_state:
     st.session_state.wn_idx = 0  # 오답 노의 현재 위치를 기억하는 변수
 if 'uploader_key' not in st.session_state:
     st.session_state.uploader_key = 0 # 업로더 초기화용 키
-if 'total_solving_time' not in st.session_state: st.session_state.total_solving_time = 0.0
-if 'q_start_time' not in st.session_state: st.session_state.q_start_time = None
-if 'correct_count' not in st.session_state: st.session_state.correct_count = 0
-
+if 'total_solving_time' not in st.session_state:
+    st.session_state.total_solving_time = 0.0
+if 'q_start_time' not in st.session_state:
+    st.session_state.q_start_time = None
+if 'correct_count' not in st.session_state:
+    st.session_state.correct_count = 0
+if 'sound_on' not in st.session_state:
+    st.session_state.sound_on = True 
 
 
 # --- [사이드바] ---
 with st.sidebar:
     st.title("⚖️ 설정")
+    st.divider()
 
+    st.toggle("🔊 효과음 활성화", key="sound_on")
     
     if st.button("📖 사용방법 보기", use_container_width=True):
         show_manual()
@@ -382,12 +409,14 @@ with tab1:
 
                 if st.session_state.answered:
                     if st.session_state.last_is_correct:
-                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
+                        col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small")
+                        play_sound("correct.mp3")
                         with col_feedback_img:
                             st.image("correct.jpeg", width=50) 
                         with col_feedback_text:
                             st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
                     else:
+                        play_sound("wrong.mp3")
                         col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                         with col_feedback_img:
                             st.image("wrong.jpeg", width=50)
@@ -487,21 +516,23 @@ with tab2:
         cw1, cw2 = st.columns(2)
         user_choice_wn = None
         with cw1:
-            if st.button("O", key="wo_o_btn", use_container_width=True, shortcut="o"): user_choice_wn = "O"
+            if st.button("O", key="wo_o_btn", use_container_width=True, shortcut="o"): user_choice_wn = "Shift+O"
         with cw2:
-            if st.button("X", key="wo_x_btn", use_container_width=True, shortcut="x"): user_choice_wn = "X"
+            if st.button("X", key="wo_x_btn", use_container_width=True, shortcut="x"): user_choice_wn = "Shift+X"
         
         if user_choice_wn:
             c_wn_ans = str(q_wn['정답']).strip().upper()
             feedback_wn_message = ""
             
             if user_choice_wn == c_wn_ans: # 정답인 경우
+                play_sound("correct.mp3")
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:
                     st.image("correct.jpeg", width=50) 
                 with col_feedback_text:
                     st.markdown("<span class='correct-feedback-text'>정답입니다!</span>", unsafe_allow_html=True)
             else: # 오답인 경우
+                play_sound("wrong.mp3")
                 col_feedback_img, col_feedback_text = st.columns([0.05, 0.95], gap="small") 
                 with col_feedback_img:
                     st.image("wrong.jpeg", width=50)

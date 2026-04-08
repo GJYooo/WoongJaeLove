@@ -4,6 +4,7 @@ import random
 import os
 import time
 import json
+import base64
 import streamlit.components.v1 as components
 
 # --- [팝업창 함수 정의] ---

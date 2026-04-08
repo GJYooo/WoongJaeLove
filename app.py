@@ -12,14 +12,27 @@ def show_manual():
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
+@st.cache_data
+def get_audio_base64(file_path):
+    """파일을 읽어서 메모리에 보관하는 함수 (삭제되면 안 됨)"""
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception as e:
+        return None
+
 def play_sound(file_path):
-    # 소리 설정 확인
+    """화면에 소리를 재생하는 함수"""
+    # 1. 소리 설정 확인
     if not st.session_state.get('sound_on', True):
         return
         
+    # 2. 위에서 정의한 get_audio_base64 함수를 호출함
     audio_base64 = get_audio_base64(file_path)
+    
     if audio_base64:
-        unique_id = str(int(time.time() * 1000))
+        uid = str(int(time.time() * 1000))
         js_template = """
             <audio id="audio_{ID}" autoplay="true">
                 <source src="data:audio/mp3;base64,{BASE64}" type="audio/mp3">
@@ -30,7 +43,7 @@ def play_sound(file_path):
                 s.play();
             </script>
         """
-        sound_html = js_template.replace("{ID}", unique_id).replace("{BASE64}", audio_base64)
+        sound_html = js_template.replace("{ID}", uid).replace("{BASE64}", audio_base64)
         st.components.v1.html(sound_html, height=0, width=0)
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---

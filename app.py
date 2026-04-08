@@ -12,16 +12,6 @@ def show_manual():
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
-@st.cache_data
-def get_audio_base64(file_path):
-    """파일을 읽어서 메모리에 보관하는 함수 (삭제되면 안 됨)"""
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except Exception as e:
-        return None
-
 def play_sound(file_path):
     # 소리 설정이 꺼져 있으면 신호를 보내지 않음
     if not st.session_state.get('sound_on', True):
@@ -69,7 +59,9 @@ st.markdown("""
         border-radius: 8px;
     }
 
-    
+    audio {
+        display: none;
+    }
     
     .correct-feedback-text {
         background-color: #e6ffed; /* 연한 초록색 배경 */
@@ -564,23 +556,12 @@ with tab3:
 
 
 if st.session_state.get('audio_trigger'):
-    # 1. 신호를 가져오고 즉시 비웁니다 (중복 재생 방지 핵심!)
-    sound_to_play = st.session_state.audio_trigger
+    # 1. 신호 가져오기
+    sound_file = st.session_state.audio_trigger
+    
+    # 2. [가장 중요] 신호를 즉시 삭제하여 중복 재생 방지
     st.session_state.audio_trigger = None 
     
-    # 2. 오디오 데이터를 베이스64로 변환
-    audio_data = get_audio_base64(sound_to_play)
-    
-    if audio_data:
-        # 3. f-string 에러를 방지하기 위해 replace 방식을 사용합니다.
-        js_template = """
-            <script>
-                var audio = new Audio("data:audio/mp3;base64,{B64}");
-                audio.volume = 0.4;
-                audio.play().catch(e => console.log("상호작용 필요"));
-            </script>
-        """
-        js_final = js_template.replace("{B64}", audio_data)
-        
-        # 4. 브라우저에 소리 명령 주입
-        components.html(js_final, height=0, width=0)
+    # 3. Streamlit 순정 오디오 기능 실행 (CSS로 숨겨져 있음)
+    # 파일이 GitHub 폴더에 있으므로 파일명만 적으면 됩니다.
+    st.audio(sound_file, format="audio/mp3", autoplay=True)

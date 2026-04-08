@@ -12,12 +12,24 @@ def show_manual():
     st.image("manual.png", use_container_width=True)
     st.caption("닫으려면 창 바깥쪽을 클릭하거나 우측 상단 X를 누르세요.")
 
+@st.cache_data
+def get_audio_base64(file_path):
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
 def play_sound(file_path):
-    # 소리 설정이 꺼져 있으면 신호를 보내지 않음
     if not st.session_state.get('sound_on', True):
         return
-    # 재생할 파일명만 주머니에 넣어둡니다.
-    st.session_state.audio_trigger = file_path
+    b64_string = get_audio_base64(file_path)
+    # 재생 시마다 고유한 ID를 부여하여 브라우저 버퍼링을 방지합니다.
+    timestamp = time.time()
+    md = f"""
+        <audio autoplay="true" id="audio_{timestamp}">
+            <source src="data:audio/mp3;base64,{b64_string}" type="audio/mp3">
+        </audio>
+        """
+    st.markdown(md, unsafe_allow_html=True)
 
 # --- [설정] 페이지 레이아웃 및 디자인 ---
 st.set_page_config(page_title="2026 형실연 중간고사 연습", layout="wide", page_icon="⚖️")
@@ -57,10 +69,6 @@ st.markdown("""
         color: #ffffff !important;
         background-color: #262730;
         border-radius: 8px;
-    }
-
-    audio {
-        display: none;
     }
     
     .correct-feedback-text {
@@ -553,13 +561,3 @@ with tab3:
     st.dataframe(db, use_container_width=True)
 
 
-if st.session_state.get('audio_trigger'):
-    # 1. 신호 가져오기
-    sound_file = st.session_state.audio_trigger
-    
-    # 2. [가장 중요] 신호를 즉시 삭제하여 중복 재생 방지
-    st.session_state.audio_trigger = None 
-    
-    # 3. Streamlit 순정 오디오 기능 실행 (CSS로 숨겨져 있음)
-    # 파일이 GitHub 폴더에 있으므로 파일명만 적으면 됩니다.
-    st.audio(sound_file, format="audio/mp3", autoplay=True)

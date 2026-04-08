@@ -414,7 +414,7 @@ with tab1:
                         if is_correct:
                             st.session_state.correct_count += 1
                             play_sound("correct.mp3")
-                        elif:
+                        else:
                             play_sound("wrong.mp3")
                     
                     if not st.session_state.last_is_correct:

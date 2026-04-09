@@ -122,39 +122,38 @@ def load_local_data(years):
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
     return combined_df
 
-def update_from_sheets(current_db, selected_years):
+def update_from_sheets(selected_years): # 인자 수정
     update_log = []
-    updated_db = current_db.copy()
-    
-    for year in selected_years:
-        gid = GID_MAP.get(year, "0")
-        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
-        
-        try:
-            sheet_df = pd.read_csv(url)
-            # 문제 내용을 기준으로 해설 비교 및 업데이트
-            for idx, row in sheet_df.iterrows():
-                problem = row['문제']
-                new_exp = row['해설']
-                
-                # 현재 로드된 데이터에서 같은 문제 찾기
-                target_mask = updated_db['문제'] == problem
-                if target_mask.any():
-                    old_exp = updated_db.loc[target_mask, '해설'].values[0]
+    # 1. 전체 데이터베이스(db) 업데이트
+    if not st.session_state.db.empty:
+        for year in selected_years:
+            gid = GID_MAP.get(year, "0")
+            url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
+            try:
+                sheet_df = pd.read_csv(url)
+                for _, row in sheet_df.iterrows():
+                    problem = row['문제']
+                    new_exp = row['해설']
                     
-                    # 해설이 달라진 경우에만 업데이트
-                    if str(old_exp) != str(new_exp):
-                        updated_db.loc[target_mask, '해설'] = new_exp
-                        update_log.append({
-                            "연도": f"{year}년",
-                            "문제": problem[:30] + "...",
-                            "이전 해설": old_exp,
-                            "바뀐 해설": new_exp
-                        })
-        except Exception as e:
-            st.sidebar.error(f"{year}년 시트 로드 실패: {e}")
-            
-    return updated_db, update_log
+                    # A. 전체 DB(db) 업데이트
+                    mask = st.session_state.db['문제'] == problem
+                    if mask.any():
+                        old_exp = st.session_state.db.loc[mask, '해설'].values[0]
+                        if str(old_exp) != str(new_exp):
+                            st.session_state.db.loc[mask, '해설'] = new_exp
+                            update_log.append({"연도": f"{year}년", "문제": problem[:30] + "...", "바뀐 해설": new_exp})
+                    
+                    # B. 현재 풀고 있는 시험지(exam_list) 업데이트
+                    for q_item in st.session_state.exam_list:
+                        if q_item['문제'] == problem:
+                            q_item['해설'] = new_exp
+                    
+                    # C. 현재 오답노트(wrong_notes) 업데이트
+                    wn_mask = st.session_state.wrong_notes['문제'] == problem
+                    if wn_mask.any():
+                        st.session_state.wrong_notes.loc[wn_mask, '해설'] = new_exp
+            except: continue
+    return update_log
 
 # --- [세션 상태 초기화] ---
 if 'db' not in st.session_state:
@@ -235,7 +234,7 @@ with st.sidebar:
             
             # 데이터 로드
             st.session_state.db = load_local_data(restored_years)
-            
+            update_from_sheets(restored_years) 
             # 진행 상태 복구 (키가 없어도 에러나지 않게 .get 활용)
             st.session_state.exam_list = data.get("exam_list", [])
             st.session_state.idx = data.get("idx", 0)
@@ -284,15 +283,16 @@ with st.sidebar:
             st.warning("먼저 데이터를 불러와주세요.")
         else:
             with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
-                updated_db, logs = update_from_sheets(st.session_state.db, st.session_state.selected_years)
-                st.session_state.db = updated_db
+                # 수정된 함수 호출
+                logs = update_from_sheets(st.session_state.selected_years)
                 st.session_state.update_history = logs
                 if logs:
-                    st.toast(f"{len(logs)}건의 해설이 업데이트되었습니다!")
+                    st.toast(f"{len(logs)}건의 해설이 실시간 반영되었습니다! 🎉")
                 else:
-                    st.toast("변경사항이 없습니다.")
-
-
+                    st.toast("이미 최신 상태입니다. ✅")
+                time.sleep(0.5)
+                st.rerun()
+                
     st.divider()
     
     # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)

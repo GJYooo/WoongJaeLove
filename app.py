@@ -122,7 +122,13 @@ def load_local_data(years):
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
     return combined_df
 
-
+@st.cache_data(ttl=600) 
+def fetch_sheet_data(url):
+    try:
+        return pd.read_csv(url)
+    except:
+        return None
+        
 def update_from_sheets(selected_years):
     update_log = []
     if not st.session_state.db.empty:
@@ -130,7 +136,7 @@ def update_from_sheets(selected_years):
             gid = GID_MAP.get(year, "0")
             url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={gid}"
             try:
-                sheet_df = pd.read_csv(url)
+                sheet_df = fetch_sheet_data(url)
                 for _, row in sheet_df.iterrows():
                     problem = row['문제']
                     new_exp = row['해설']

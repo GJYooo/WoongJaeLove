@@ -197,7 +197,7 @@ if 'auto_update' not in st.session_state:
 with st.sidebar:
     st.title("⚖️ 설정")
     st.toggle("🔊 효과음 활성화", key="sound_on")
-    st.toggle("🌐 자동 해설 업데이트", key="auto_update", help="데이터를 불러올 때 구글 시트의 해설을 자동으로 반영합니다.")
+    st.toggle("🌐 자동 해설 업데이트", key="auto_update", help="데이터를 불러올 때 구글 시트(집단지성)의 해설을 자동으로 반영합니다.")
     st.divider()
 
     if st.button("📖 사용방법 보기", use_container_width=True):

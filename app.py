@@ -189,12 +189,15 @@ if 'correct_count' not in st.session_state:
     st.session_state.correct_count = 0
 if 'sound_on' not in st.session_state:
     st.session_state.sound_on = True  # 기본값은 '켜짐'
+if 'auto_update' not in st.session_state:
+    st.session_state.auto_update = True
 
 
 # --- [사이드바] ---
 with st.sidebar:
     st.title("⚖️ 설정")
     st.toggle("🔊 효과음 활성화", key="sound_on")
+    st.toggle("🌐 자동 해설 업데이트", key="auto_update", help="데이터를 불러올 때 구글 시트의 해설을 자동으로 반영합니다.")
     st.divider()
 
     if st.button("📖 사용방법 보기", use_container_width=True):
@@ -239,7 +242,8 @@ with st.sidebar:
             
             # 데이터 로드
             st.session_state.db = load_local_data(restored_years)
-            update_from_sheets(restored_years) 
+            if st.session_state.auto_update:
+                update_from_sheets(restored_years)
             # 진행 상태 복구 (키가 없어도 에러나지 않게 .get 활용)
             st.session_state.exam_list = data.get("exam_list", [])
             st.session_state.idx = data.get("idx", 0)
@@ -277,18 +281,9 @@ with st.sidebar:
     # 기본 데이터 로드 버튼
     if st.button("📁 선택 범위 데이터 불러오기", use_container_width=True):
         st.session_state.db = load_local_data(st.session_state.selected_years)
-        st.success(f"{len(st.session_state.db)}개의 문항을 불러왔습니다.")
-
-    st.divider()
-
-    # 집단지성 반영 버튼
-    st.subheader("🧠 집단지성 (해설 업데이트)")
-    if st.button("✨ 집단지성 반영", use_container_width=True):
-        if st.session_state.db.empty:
-            st.warning("먼저 데이터를 불러와주세요.")
-        else:
-            with st.spinner("구글 시트에서 최신 해설을 가져오는 중..."):
-                # 수정된 함수 호출
+        if st.session_state.auto_update:
+            with st.spinner("최신 해설 동기화 중..."):
+                update_from_sheets(st.session_state.selected_years)
                 logs = update_from_sheets(st.session_state.selected_years)
                 st.session_state.update_history = logs
                 if logs:
@@ -297,7 +292,10 @@ with st.sidebar:
                     st.toast("이미 최신 상태입니다. ✅")
                 time.sleep(0.5)
                 st.rerun()
-                
+            st.success(f"{len(st.session_state.db)}개 문항 로드 및 해설 동기화 완료!")
+        else:
+            st.success(f"{len(st.session_state.db)}개 문항 로드 완료!")
+
     st.divider()
     
     # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
@@ -368,6 +366,7 @@ with tab1:
             # [A] 문제 풀이 모드
             if curr_idx < len(exam):
                 q = exam[curr_idx]
+                st.write(f"### 📝 문제 {curr_idx + 1} / {len(exam)}")
                 st.progress((curr_idx + 1) / len(exam))
                 
                 # 문제 출력 전, 만약 타이머가 안 돌아가고 있다면 (다음 문제로 넘어온 직후) 시작 시간 기록

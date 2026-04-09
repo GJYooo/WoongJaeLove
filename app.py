@@ -122,6 +122,7 @@ def load_local_data(years):
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
     return combined_df
 
+
 def update_from_sheets(selected_years):
     update_log = []
     if not st.session_state.db.empty:
@@ -134,28 +135,30 @@ def update_from_sheets(selected_years):
                     problem = row['문제']
                     new_exp = row['해설']
                     
+                    # A. 전체 DB 업데이트 및 마킹
                     mask = st.session_state.db['문제'] == problem
                     if mask.any():
                         old_exp = st.session_state.db.loc[mask, '해설'].values[0]
                         if str(old_exp) != str(new_exp):
-                            # [데이터 업데이트]
                             st.session_state.db.loc[mask, '해설'] = new_exp
+                            st.session_state.db.loc[mask, '해설업데이트'] = True # 🏷️ 마킹 추가
                             
-                            # [중요: 로그 생성 시 '이전 해설' 키를 명확히 넣습니다]
-                            update_log.append({
-                                "연도": f"{year}년",
-                                "문제": problem[:30] + "...",
-                                "이전 해설": old_exp, # 이 줄이 빠졌었습니다!
-                                "바뀐 해설": new_exp
-                            })
-                            
-                            # (현재 시험지 및 오답노트 업데이트 로직은 그대로 유지)
-                            for q_item in st.session_state.exam_list:
-                                if q_item['문제'] == problem: q_item['해설'] = new_exp
-                            wn_mask = st.session_state.wrong_notes['문제'] == problem
-                            if wn_mask.any(): st.session_state.wrong_notes.loc[wn_mask, '해설'] = new_exp
+                            update_log.append({"연도": f"{year}년", "문제": problem[:30] + "...", "이전 해설": old_exp, "바뀐 해설": new_exp})
+                    
+                    # B. 현재 풀고 있는 시험지(exam_list) 마킹
+                    for q_item in st.session_state.exam_list:
+                        if q_item['문제'] == problem:
+                            q_item['해설'] = new_exp
+                            q_item['해설업데이트'] = True # 🏷️ 마킹 추가
+                    
+                    # C. 현재 오답노트(wrong_notes) 마킹
+                    wn_mask = st.session_state.wrong_notes['문제'] == problem
+                    if wn_mask.any():
+                        st.session_state.wrong_notes.loc[wn_mask, '해설'] = new_exp
+                        st.session_state.wrong_notes.loc[wn_mask, '해설업데이트'] = True # 🏷️ 마킹 추가
             except: continue
     return update_log
+
 
 # --- [세션 상태 초기화] ---
 if 'db' not in st.session_state:
@@ -372,9 +375,14 @@ with tab1:
                     st.session_state.q_start_time = time.time()
 
                 raw_year_display = str(q.get('연도', '미분류')).split('.')[0]
-                st.write(f"**문제 {curr_idx + 1} / {len(exam)}** ({q.get('연도', '미분류')}년)")
                 clean_question = str(q["문제"]).replace('<', '〈').replace('>', '〉')
-                st.markdown(f'<div class="question-box"><b>[{raw_year_display}년]</b><br><br>{clean_question}</div>', unsafe_allow_html=True)
+
+                update_tag = ""
+                if q.get('해설업데이트') == True:
+                    update_tag = " <span style='color: #ff4b4b; font-size: 0.8rem; border: 1px solid #ff4b4b; padding: 2px 5px; border-radius: 5px; margin-left: 10px;'>해설 업데이트</span>"
+                
+                # 화면에 출력
+                st.markdown(f'<div class="question-box"><b>[{raw_year_display}년]</b>{update_tag}<br><br>{clean_question}</div>', unsafe_allow_html=True)
                 
                 user_input = None
                 b_cols = st.columns(3)
@@ -510,8 +518,12 @@ with tab2:
         q_wn = wn.iloc[st.session_state.wn_idx]
         raw_year_wn_display = str(q_wn.get('연도', '미분류')).split('.')[0]
         clean_question_wn = str(q_wn["문제"]).replace('<', '〈').replace('>', '〉')
-        
-        st.markdown(f'<div class="question-box"><b>[{raw_year_wn_display}년]</b><br><br>{clean_question_wn}</div>', unsafe_allow_html=True)
+
+        update_tag_wn = ""
+        if q_wn.get('해설업데이트') == True:
+            update_tag_wn = " <span style='color: #ff4b4b; font-size: 0.8rem; border: 1px solid #ff4b4b; padding: 2px 5px; border-radius: 5px; margin-left: 10px;'>해설 업데이트</span>"
+            
+        st.markdown(f'<div class="question-box"><b>[{raw_year_wn_display}년]</b>{update_tag_wn}<br><br>{clean_question_wn}</div>', unsafe_allow_html=True)
         
         # 정답 입력 버튼 섹션
         cw1, cw2 = st.columns(2)

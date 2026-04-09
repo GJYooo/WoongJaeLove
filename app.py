@@ -243,7 +243,9 @@ with st.sidebar:
             # 데이터 로드
             st.session_state.db = load_local_data(restored_years)
             if st.session_state.auto_update:
-                update_from_sheets(restored_years)
+                logs = update_from_sheets(st.session_state.selected_years)
+                st.session_state.update_history = logs
+                
             # 진행 상태 복구 (키가 없어도 에러나지 않게 .get 활용)
             st.session_state.exam_list = data.get("exam_list", [])
             st.session_state.idx = data.get("idx", 0)
@@ -283,7 +285,6 @@ with st.sidebar:
         st.session_state.db = load_local_data(st.session_state.selected_years)
         if st.session_state.auto_update:
             with st.spinner("최신 해설 동기화 중..."):
-                update_from_sheets(st.session_state.selected_years)
                 logs = update_from_sheets(st.session_state.selected_years)
                 st.session_state.update_history = logs
                 if logs:
@@ -294,6 +295,7 @@ with st.sidebar:
                 st.rerun()
             st.success(f"{len(st.session_state.db)}개 문항 로드 및 해설 동기화 완료!")
         else:
+            st.session_state.update_history = []
             st.success(f"{len(st.session_state.db)}개 문항 로드 완료!")
 
     st.divider()

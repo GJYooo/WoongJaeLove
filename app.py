@@ -122,9 +122,8 @@ def load_local_data(years):
                 combined_df = pd.concat([combined_df, df], ignore_index=True)
     return combined_df
 
-def update_from_sheets(selected_years): # 인자 수정
+def update_from_sheets(selected_years):
     update_log = []
-    # 1. 전체 데이터베이스(db) 업데이트
     if not st.session_state.db.empty:
         for year in selected_years:
             gid = GID_MAP.get(year, "0")
@@ -135,23 +134,26 @@ def update_from_sheets(selected_years): # 인자 수정
                     problem = row['문제']
                     new_exp = row['해설']
                     
-                    # A. 전체 DB(db) 업데이트
                     mask = st.session_state.db['문제'] == problem
                     if mask.any():
                         old_exp = st.session_state.db.loc[mask, '해설'].values[0]
                         if str(old_exp) != str(new_exp):
+                            # [데이터 업데이트]
                             st.session_state.db.loc[mask, '해설'] = new_exp
-                            update_log.append({"연도": f"{year}년", "문제": problem[:30] + "...", "바뀐 해설": new_exp})
-                    
-                    # B. 현재 풀고 있는 시험지(exam_list) 업데이트
-                    for q_item in st.session_state.exam_list:
-                        if q_item['문제'] == problem:
-                            q_item['해설'] = new_exp
-                    
-                    # C. 현재 오답노트(wrong_notes) 업데이트
-                    wn_mask = st.session_state.wrong_notes['문제'] == problem
-                    if wn_mask.any():
-                        st.session_state.wrong_notes.loc[wn_mask, '해설'] = new_exp
+                            
+                            # [중요: 로그 생성 시 '이전 해설' 키를 명확히 넣습니다]
+                            update_log.append({
+                                "연도": f"{year}년",
+                                "문제": problem[:30] + "...",
+                                "이전 해설": old_exp, # 이 줄이 빠졌었습니다!
+                                "바뀐 해설": new_exp
+                            })
+                            
+                            # (현재 시험지 및 오답노트 업데이트 로직은 그대로 유지)
+                            for q_item in st.session_state.exam_list:
+                                if q_item['문제'] == problem: q_item['해설'] = new_exp
+                            wn_mask = st.session_state.wrong_notes['문제'] == problem
+                            if wn_mask.any(): st.session_state.wrong_notes.loc[wn_mask, '해설'] = new_exp
             except: continue
     return update_log
 
@@ -296,13 +298,15 @@ with st.sidebar:
     st.divider()
     
     # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
-    if st.session_state.update_history:
+   if st.session_state.update_history:
         with st.expander("🔍 최근 업데이트 내역 확인"):
             for log in st.session_state.update_history:
-                st.markdown(f"**[{log['연도']}]** {log['문제']}")
-                st.caption(f"이전: {log['이전 해설']}")
-                st.markdown(f"새해설: {log['바뀐 해설']}")
+                st.markdown(f"**[{log.get('연도', '미분류')}]** {log.get('문제', '문제 정보 없음')}")
+                # .get()을 쓰면 키가 없어도 에러 대신 '없음'을 출력하여 앱이 멈추지 않습니다.
+                st.caption(f"이전: {log.get('이전 해설', '정보 없음')}")
+                st.markdown(f"새해설: {log.get('바뀐 해설', '정보 없음')}")
                 st.divider()
+    
     should_rerun = False
 
     st.subheader("💾 데이터 관리")

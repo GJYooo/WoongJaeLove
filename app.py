@@ -106,7 +106,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- [데이터 로드 및 업데이트 로직] ---
-
+@st.cache_data
 def load_local_data(years):
     combined_df = pd.DataFrame()
     for year in years:

@@ -299,13 +299,12 @@ with st.sidebar:
     
     # 업데이트 내역 확인 버튼 (내역이 있을 때만 표시)
    if st.session_state.update_history:
-        with st.expander("🔍 최근 업데이트 내역 확인"):
-            for log in st.session_state.update_history:
-                st.markdown(f"**[{log.get('연도', '미분류')}]** {log.get('문제', '문제 정보 없음')}")
-                # .get()을 쓰면 키가 없어도 에러 대신 '없음'을 출력하여 앱이 멈추지 않습니다.
-                st.caption(f"이전: {log.get('이전 해설', '정보 없음')}")
-                st.markdown(f"새해설: {log.get('바뀐 해설', '정보 없음')}")
-                st.divider()
+       with st.expander("🔍 최근 업데이트 내역 확인"):
+           for log in st.session_state.update_history:
+               st.markdown(f"**[{log.get('연도', '미분류')}]** {log.get('문제', '문제 정보 없음')}")
+               st.caption(f"이전: {log.get('이전 해설', '정보 없음')}")
+               st.markdown(f"새해설: {log.get('바뀐 해설', '정보 없음')}")
+               st.divider()
     
     should_rerun = False
 

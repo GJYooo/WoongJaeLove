@@ -197,6 +197,8 @@ if 'sound_on' not in st.session_state:
     st.session_state.sound_on = True  # 기본값은 '켜짐'
 if 'auto_update' not in st.session_state:
     st.session_state.auto_update = True
+if 'exam_finished_celebrated' not in st.session_state:
+    st.session_state.exam_finished_celebrated = False
 
 
 # --- [사이드바] ---
@@ -361,6 +363,7 @@ with tab1:
         if st.button("🚀 새 시험 시작", key="mid_start", use_container_width=True):
             st.session_state.exam_list = db.sample(n=num).to_dict('records')
             st.session_state.idx = 0
+            st.session_state.exam_finished_celebrated = False
             st.session_state.answered = False
             st.session_state.correct_count = 0
             st.session_state.total_solving_time = 0.0  # 누적 풀이 시간 초기화
@@ -461,7 +464,9 @@ with tab1:
 
             # [B] 시험 결과 리포트
             else:
-                st.balloons()
+                if not st.session_state.exam_finished_celebrated:
+                    st.balloons()
+                    st.session_state.exam_finished_celebrated = True 
                 st.header("📊 문제풀이 결과 리포트")
                 st.caption("※ 해설을 읽은 시간은 포함되지 않고 문제를 푼 시간만 포함")
                 
